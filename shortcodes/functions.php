@@ -43,3 +43,12 @@ function rest_posts_embedder() {
 
     return $allposts;
 }
+
+function display_posts_enqueue_styles() {
+    // Define the path to the CSS file
+    $css_path = plugin_dir_url( __FILE__ ) . 'assets/css/custom.css';
+    
+    // Enqueue the CSS file
+    wp_enqueue_style( 'display-posts-style', $css_path );
+}
+add_action( 'wp_enqueue_scripts', 'display_posts_enqueue_styles' );
