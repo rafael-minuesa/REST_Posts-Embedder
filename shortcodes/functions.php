@@ -111,7 +111,7 @@ function rest_posts_embedder($atts = array()) {
 
 function display_posts_enqueue_styles() {
     // Define the path to the CSS file
-    $css_path = plugin_dir_url( __FILE__ ) . 'assets/css/custom.css';
+    $css_path = plugin_dir_url( dirname(__FILE__) ) . 'assets/css/custom.css';
     
     // Enqueue the CSS file
     wp_enqueue_style( 'display-posts-style', $css_path, array(), '1.5', 'all' );
