@@ -1,4 +1,7 @@
 <?php
+
+namespace RestPostsEmbedder\Admin;
+
 // Add a settings page
 function embed_posts_settings_page() {
     add_options_page(
