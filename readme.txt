@@ -1,6 +1,6 @@
 === REST Posts Embedder ===
-Contributors: rafaelminuesa
-Donate link: https://example.com/donate
+Contributors: Rafael Minuesa
+Donate link: https://peowoos.com/
 Tags: rest, api, posts, embed
 Requires at least: 5.0
 Tested up to: 6.4
@@ -9,10 +9,11 @@ Requires PHP: 7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Embed posts from a specified REST API endpoint with enhanced features.
+Embed posts from a specified WordPress REST API endpoint with enhanced features.
 
 == Description ==
-REST Posts Embedder allows you to easily embed posts from any WordPress REST API endpoint into your website. Features include:
+REST Posts Embedder allows you to easily embed posts from any WordPress REST API endpoint into your website. 
+Features include:
 
 * Customizable endpoint configuration
 * Responsive grid layout
@@ -41,6 +42,9 @@ Yes, use the shortcode attribute: `[posts_embedder count="10"]`
 * Improved error handling
 * Enhanced caching mechanism
 * Added more configuration options
+
+= 1.4 =
+* Added admin panel
 
 = 1.0 =
 * Initial release
