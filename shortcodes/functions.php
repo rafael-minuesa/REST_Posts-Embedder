@@ -1,4 +1,7 @@
 <?php
+
+namespace RestPostsEmbedder\Shortcodes;
+
 function rest_posts_embedder() {
     $allposts = '';
     $endpoint = get_option('embed_posts_endpoint', 'https://prowoos.com/wp-json/wp/v2/posts?_embed'); // Default to the original URL if not set
