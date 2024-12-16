@@ -1,0 +1,8 @@
+# Translations template for REST Posts Embedder plugin
+msgid ""
+msgstr ""
+"Project-Version: 1.5\n"
+"POT-Creation-Date: 2024-01-01 00:00+0000\n"
+"PO-Revision-Date: 2024-01-01 00:00+0000\n"
+"Last-Translator: Your Name <your.email@example.com>\n"
+"Language-Team: \n"
