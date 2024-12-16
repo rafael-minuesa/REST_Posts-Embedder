@@ -46,3 +46,17 @@ wp-config.php
 # Note: If you wish to whitelist themes,
 # uncomment the next line
 #/wp-content/themes
+
+# Ignore system and IDE files
+.DS_Store
+.idea/
+.vscode/
+
+# Ignore composer dependencies
+/vendor/
+
+# Ignore npm dependencies
+/node_modules/
+
+# Ignore built files
+*.zip
