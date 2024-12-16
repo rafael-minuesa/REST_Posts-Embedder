@@ -36,8 +36,8 @@ function embed_posts_settings_page_html() {
     <?php
 }
 
-// Register the setting
+// Register the setting and sanitize input
 function embed_posts_settings_init() {
-    register_setting('embed_posts_settings', 'embed_posts_endpoint');
+    register_setting('embed_posts_settings', 'embed_posts_endpoint', 'sanitize_text_field'); // Sanitize input
 }
 add_action('admin_init', 'embed_posts_settings_init');
