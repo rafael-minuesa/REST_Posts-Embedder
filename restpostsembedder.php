@@ -18,6 +18,33 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Activation hook
+register_activation_hook(__FILE__, 'rest_posts_embedder_activate');
+
+function rest_posts_embedder_activate() {
+    // Perform any necessary setup tasks
+    // For example, set default options
+    add_option('embed_posts_endpoint', 'https://prowoos.com/wp-json/wp/v2/posts?_embed');
+}
+
+// Deactivation hook
+register_deactivation_hook(__FILE__, 'rest_posts_embedder_deactivate');
+
+function rest_posts_embedder_deactivate() {
+    // Perform any cleanup tasks
+    // For example, clear any transients or caches
+    delete_transient('rest_posts_embedder_cache');
+}
+
+// Uninstall hook
+register_uninstall_hook(__FILE__, 'rest_posts_embedder_uninstall');
+
+function rest_posts_embedder_uninstall() {
+    // Remove all plugin-related data
+    delete_option('embed_posts_endpoint');
+    // Remove any custom database tables if created
+}
+
 // Include admin functions
 require plugin_dir_path( __FILE__ ) . 'admin/functions.php';
 
