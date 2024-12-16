@@ -12,6 +12,8 @@
  *
  * @package restpostsembedder
  */
+// Define the namespace
+namespace RestPostsEmbedder;
 
 // Disable direct file access
 if ( ! defined( 'ABSPATH' ) ) {
