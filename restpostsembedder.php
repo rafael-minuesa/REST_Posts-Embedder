@@ -28,7 +28,8 @@ function rest_posts_embedder_load_textdomain() {
 add_action('plugins_loaded', 'rest_posts_embedder_load_textdomain');
 
 // Activation hook
-register_activation_hook(__FILE__, 'rest_posts_embedder_activate');
+// register_activation_hook(__FILE__, 'rest_posts_embedder_activate');
+register_activation_hook(__FILE__, 'RestPostsEmbedder\\rest_posts_embedder_activate');
 
 function rest_posts_embedder_activate() {
     // Perform any necessary setup tasks
@@ -37,7 +38,8 @@ function rest_posts_embedder_activate() {
 }
 
 // Deactivation hook
-register_deactivation_hook(__FILE__, 'rest_posts_embedder_deactivate');
+// register_deactivation_hook(__FILE__, 'rest_posts_embedder_deactivate');
+register_deactivation_hook(__FILE__, 'RestPostsEmbedder\\rest_posts_embedder_deactivate');
 
 function rest_posts_embedder_deactivate() {
     // Perform cleanup tasks
@@ -45,7 +47,9 @@ function rest_posts_embedder_deactivate() {
 }
 
 // Uninstall hook
-register_uninstall_hook(__FILE__, 'rest_posts_embedder_uninstall');
+// register_uninstall_hook(__FILE__, 'rest_posts_embedder_uninstall');
+register_uninstall_hook(__FILE__, 'RestPostsEmbedder\\rest_posts_embedder_uninstall');
+
 
 function rest_posts_embedder_uninstall() {
     // Remove all plugin-related data
