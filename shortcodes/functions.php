@@ -82,19 +82,19 @@ function rest_posts_embedder($atts = array()) {
         $allposts .= '<div class="wrapper">
                         <div class="embed-posts-wrapper">
                             <article class="embed-posts">
-                                <a href="' . $link . '" target="_blank">
+                                <a href="' . $link . '" target="_blank" rel="noopener noreferrer">
                                     <h3>' . $title . '</h3>
                                 </a>
-                                <small>' . sprintf(__('%1$s, by %2$s', 'restpostsembedder'), 
-                                    $fordate, 
-                                    '<a href="' . $author_name_url . '" target="_blank">' . $author_name . '</a>') . 
+                                <small>' . sprintf(__('%1$s, by %2$s', 'restpostsembedder'),
+                                    $fordate,
+                                    '<a href="' . $author_name_url . '" target="_blank" rel="noopener noreferrer">' . $author_name . '</a>') .
                                 '</small>
                                 <p class="embed-post-content">
-                                    <a href="' . $link . '" target="_blank">
+                                    <a href="' . $link . '" target="_blank" rel="noopener noreferrer">
                                         ' . ($thumb_url ? '<img src="' . $thumb_url . '" alt="' . $title . '" />' : '') . '
                                     </a>
                                     ' . $excerpt . '
-                                    <a href="' . $link . '" target="_blank" class="read-more">
+                                    <a href="' . $link . '" target="_blank" rel="noopener noreferrer" class="read-more">
                                         <b>' . __('Read more...', 'restpostsembedder') . '</b>
                                     </a>
                                 </p>
