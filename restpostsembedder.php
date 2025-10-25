@@ -5,7 +5,7 @@
  * Plugin URI:  https://github.com/rafael-minuesa/REST_Posts-Embedder
  * Author:      Rafael Minuesa
  * Author URI:  https://www.linkedin.com/in/rafaelminuesa/
- * Version:     3.5.1
+ * Version:     3.5.2
  * Text Domain: restpostsembedder
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Define plugin constants
 if (!defined('REST_POSTS_EMBEDDER_VERSION')) {
-    define('REST_POSTS_EMBEDDER_VERSION', '3.5.1');
+    define('REST_POSTS_EMBEDDER_VERSION', '3.5.2');
 }
 if (!defined('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT')) {
     define('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT', 'https://prowoos.com/wp-json/wp/v2/posts?_embed');
