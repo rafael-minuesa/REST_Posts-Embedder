@@ -5,7 +5,7 @@
  * Plugin URI:  https://prowoos.com/
  * Author:      Rafael Minuesa
  * Author URI:  https://www.linkedin.com/in/rafaelminuesa/
- * Version:     2.7
+ * Version:     2.8.0
  * Text Domain: restpostsembedder
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 function rest_posts_embedder_load_textdomain() {
     load_plugin_textdomain('restpostsembedder', false, dirname(plugin_basename(__FILE__)) . '/languages');
 }
-add_action('plugins_loaded', 'rest_posts_embedder_load_textdomain');
+add_action('plugins_loaded', 'RestPostsEmbedder\\rest_posts_embedder_load_textdomain');
 
 // Activation hook
 // register_activation_hook(__FILE__, 'rest_posts_embedder_activate');
@@ -42,8 +42,15 @@ function rest_posts_embedder_activate() {
 register_deactivation_hook(__FILE__, 'RestPostsEmbedder\\rest_posts_embedder_deactivate');
 
 function rest_posts_embedder_deactivate() {
-    // Perform cleanup tasks
-    delete_transient('rest_posts_embedder_cache');
+    // Perform cleanup tasks - delete all plugin transients
+    global $wpdb;
+    $wpdb->query(
+        $wpdb->prepare(
+            "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+            $wpdb->esc_like('_transient_rest_posts_embedder_') . '%',
+            $wpdb->esc_like('_transient_timeout_rest_posts_embedder_') . '%'
+        )
+    );
 }
 
 // Uninstall hook
@@ -63,7 +70,7 @@ function rest_posts_embedder_settings_link($links) {
     array_unshift($links, $settings_link);
     return $links;
 }
-add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'rest_posts_embedder_settings_link');
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'RestPostsEmbedder\\rest_posts_embedder_settings_link');
 
 // Include admin functions
 require plugin_dir_path( __FILE__ ) . 'admin/functions.php';
@@ -72,4 +79,4 @@ require plugin_dir_path( __FILE__ ) . 'admin/functions.php';
 require plugin_dir_path( __FILE__ ) . 'shortcodes/functions.php';
 
 // Register shortcode
-add_shortcode( 'posts_embedder', 'rest_posts_embedder' );
+add_shortcode( 'posts_embedder', 'RestPostsEmbedder\\Shortcodes\\rest_posts_embedder' );

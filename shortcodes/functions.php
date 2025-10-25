@@ -48,8 +48,14 @@ function rest_posts_embedder($atts = array()) {
 
     // Parse response
     $remote_posts = json_decode(wp_remote_retrieve_body($response));
-    
-    if (empty($remote_posts)) {
+
+    // Check for JSON decode errors
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        error_log('REST Posts Embedder JSON Error: ' . json_last_error_msg());
+        return '<p>' . __('Unable to parse response from API. Invalid JSON received.', 'restpostsembedder') . '</p>';
+    }
+
+    if (empty($remote_posts) || !is_array($remote_posts)) {
         return '<p>' . __('No posts found.', 'restpostsembedder') . '</p>';
     }
 
@@ -82,19 +88,19 @@ function rest_posts_embedder($atts = array()) {
         $allposts .= '<div class="wrapper">
                         <div class="embed-posts-wrapper">
                             <article class="embed-posts">
-                                <a href="' . $link . '" target="_blank">
+                                <a href="' . $link . '" target="_blank" rel="noopener noreferrer">
                                     <h3>' . $title . '</h3>
                                 </a>
-                                <small>' . sprintf(__('%1$s, by %2$s', 'restpostsembedder'), 
-                                    $fordate, 
-                                    '<a href="' . $author_name_url . '" target="_blank">' . $author_name . '</a>') . 
+                                <small>' . sprintf(__('%1$s, by %2$s', 'restpostsembedder'),
+                                    $fordate,
+                                    '<a href="' . $author_name_url . '" target="_blank" rel="noopener noreferrer">' . $author_name . '</a>') .
                                 '</small>
                                 <p class="embed-post-content">
-                                    <a href="' . $link . '" target="_blank">
+                                    <a href="' . $link . '" target="_blank" rel="noopener noreferrer">
                                         ' . ($thumb_url ? '<img src="' . $thumb_url . '" alt="' . $title . '" />' : '') . '
                                     </a>
                                     ' . $excerpt . '
-                                    <a href="' . $link . '" target="_blank" class="read-more">
+                                    <a href="' . $link . '" target="_blank" rel="noopener noreferrer" class="read-more">
                                         <b>' . __('Read more...', 'restpostsembedder') . '</b>
                                     </a>
                                 </p>
@@ -112,8 +118,8 @@ function rest_posts_embedder($atts = array()) {
 function display_posts_enqueue_styles() {
     // Define the path to the CSS file
     $css_path = plugin_dir_url( dirname(__FILE__) ) . 'assets/css/custom.css';
-    
-    // Enqueue the CSS file
-    wp_enqueue_style( 'display-posts-style', $css_path, array(), '1.5', 'all' );
+
+    // Enqueue the CSS file with dynamic version
+    wp_enqueue_style( 'display-posts-style', $css_path, array(), '2.8.0', 'all' );
 }
-add_action( 'wp_enqueue_scripts', 'display_posts_enqueue_styles' );
+add_action( 'wp_enqueue_scripts', 'RestPostsEmbedder\\Shortcodes\\display_posts_enqueue_styles' );
