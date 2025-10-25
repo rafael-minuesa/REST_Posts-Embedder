@@ -134,10 +134,21 @@ function rest_posts_embedder($atts = array()) {
         $link = isset($remote_post->link) ? esc_url($remote_post->link) : '';
         $fordate = isset($remote_post->modified) ? wp_date('jS \of F Y', strtotime($remote_post->modified)) : '';
         
-        // Featured image
+        // Featured image with multiple fallbacks
         $thumb_url = '';
-        if (!empty($remote_post->featured_media) && isset($remote_post->_embedded->{'wp:featuredmedia'}[0]->media_details->sizes->medium->source_url)) {
-            $thumb_url = esc_url($remote_post->_embedded->{'wp:featuredmedia'}[0]->media_details->sizes->medium->source_url);
+        if (!empty($remote_post->featured_media) && isset($remote_post->_embedded->{'wp:featuredmedia'}[0])) {
+            $media = $remote_post->_embedded->{'wp:featuredmedia'}[0];
+
+            // Try different image sizes in order of preference
+            if (isset($media->media_details->sizes->medium->source_url)) {
+                $thumb_url = esc_url($media->media_details->sizes->medium->source_url);
+            } elseif (isset($media->media_details->sizes->thumbnail->source_url)) {
+                $thumb_url = esc_url($media->media_details->sizes->thumbnail->source_url);
+            } elseif (isset($media->media_details->sizes->full->source_url)) {
+                $thumb_url = esc_url($media->media_details->sizes->full->source_url);
+            } elseif (isset($media->source_url)) {
+                $thumb_url = esc_url($media->source_url);
+            }
         }
 
         // Author information
@@ -216,20 +227,38 @@ function display_posts_enqueue_styles() {
     // Enqueue the CSS file with dynamic version
     wp_enqueue_style( 'display-posts-style', $css_path, array(), REST_POSTS_EMBEDDER_VERSION, 'all' );
 
-    // Add inline CSS for column configuration
+    // Get settings
     $columns_desktop = absint(get_option('embed_posts_columns_desktop', 2));
     $columns_mobile = absint(get_option('embed_posts_columns_mobile', 1));
+    $show_images_desktop = absint(get_option('embed_posts_show_images_desktop', 1));
+    $show_images_mobile = absint(get_option('embed_posts_show_images_mobile', 1));
 
     $inline_css = "
-    /* Column configuration */
+    /* Fix wrapper layout */
+    .wrapper {
+        width: 100%;
+        max-width: 100%;
+        float: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* Column configuration for desktop */
     .embed-posts-wrapper {
         grid-template-columns: repeat({$columns_desktop}, 1fr);
     }
 
+    /* Hide images on desktop if disabled */
+    " . (!$show_images_desktop ? ".embed-posts img { display: none; }" : "") . "
+
+    /* Mobile styles */
     @media only screen and (max-width: 768px) {
         .embed-posts-wrapper {
             grid-template-columns: repeat({$columns_mobile}, 1fr);
         }
+
+        /* Hide images on mobile if disabled */
+        " . (!$show_images_mobile ? ".embed-posts img { display: none !important; }" : "") . "
     }
     ";
 

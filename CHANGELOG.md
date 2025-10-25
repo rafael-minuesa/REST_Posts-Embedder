@@ -5,7 +5,32 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.5.0] - 2025-10-26
+## [3.5.1] - 2025-10-25
+
+### Fixed
+- **Featured images not displaying** - Added multiple fallback sizes (medium → thumbnail → full → source_url)
+- **Grid layout broken** - Fixed `.wrapper` CSS causing posts to stack instead of display side-by-side
+- **CSS width issues** - Changed wrapper from 50% width with float to 100% width without float
+- Grid columns now properly applied and posts display in configured columns
+
+### Added
+- **Show/Hide Featured Images** settings in Styling tab:
+  - Option to show/hide images on Desktop
+  - Option to show/hide images on Mobile
+  - Independent control for each device type
+- Dynamic CSS to hide images based on settings
+
+### Improved
+- Featured image detection now tries multiple image sizes before giving up
+- Better fallback handling when medium size doesn't exist
+- More robust image URL extraction from REST API response
+
+### Technical Details
+- New options: `embed_posts_show_images_desktop`, `embed_posts_show_images_mobile`
+- Wrapper CSS override in inline styles to fix layout
+- Conditional CSS injection for image visibility
+
+## [3.5.0] - 2025-10-25
 
 ### Summary
 Complete admin interface overhaul with styling controls, custom CSS, configurable caching, and comprehensive documentation. This version represents the culmination of all v3.x improvements.

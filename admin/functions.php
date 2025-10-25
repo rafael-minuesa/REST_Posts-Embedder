@@ -468,6 +468,27 @@ function render_styling_settings() {
                 </tr>
                 <tr valign="top">
                     <th scope="row">
+                        <label for="embed_posts_show_images"><?php esc_html_e('Show Featured Images', 'restpostsembedder'); ?></label>
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" id="embed_posts_show_images_desktop" name="embed_posts_show_images_desktop" value="1"
+                                   <?php checked(get_option('embed_posts_show_images_desktop', 1), 1); ?>>
+                            <?php esc_html_e('Show on Desktop', 'restpostsembedder'); ?>
+                        </label>
+                        <br>
+                        <label>
+                            <input type="checkbox" id="embed_posts_show_images_mobile" name="embed_posts_show_images_mobile" value="1"
+                                   <?php checked(get_option('embed_posts_show_images_mobile', 1), 1); ?>>
+                            <?php esc_html_e('Show on Mobile', 'restpostsembedder'); ?>
+                        </label>
+                        <p class="description">
+                            <?php esc_html_e('Control whether featured images are displayed on different devices.', 'restpostsembedder'); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row">
                         <label for="embed_posts_custom_css"><?php esc_html_e('Custom CSS', 'restpostsembedder'); ?></label>
                     </th>
                     <td>
@@ -617,6 +638,18 @@ function embed_posts_styling_init() {
     register_setting('embed_posts_styling', 'embed_posts_columns_mobile', array(
         'type' => 'number',
         'sanitize_callback' => 'RestPostsEmbedder\\Admin\\sanitize_columns_mobile',
+        'default' => 1
+    ));
+
+    register_setting('embed_posts_styling', 'embed_posts_show_images_desktop', array(
+        'type' => 'boolean',
+        'sanitize_callback' => 'absint',
+        'default' => 1
+    ));
+
+    register_setting('embed_posts_styling', 'embed_posts_show_images_mobile', array(
+        'type' => 'boolean',
+        'sanitize_callback' => 'absint',
         'default' => 1
     ));
 
