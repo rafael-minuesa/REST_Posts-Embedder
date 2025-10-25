@@ -86,7 +86,7 @@ This is a **major release** with breaking changes in the admin interface, but fu
 - Enhanced validation error messages with context and ranges
 - Cache expiration now uses constant instead of hardcoded value
 
-## [2.8.1] - 2025-10-25
+## [2.8.1] - 2025-10-22
 
 ### Fixed
 - Replaced deprecated `date_i18n()` with modern `wp_date()` function for better timezone handling
@@ -99,7 +99,7 @@ This is a **major release** with breaking changes in the admin interface, but fu
 - Improved CSS portability across different sites and themes
 - Better responsive design for inline image layouts
 
-## [2.8.0] - 2025-10-25
+## [2.8.0] - 2025-10-20
 
 ### Fixed
 - Fixed namespace issues in admin and shortcode action/filter hooks
@@ -113,7 +113,7 @@ This is a **major release** with breaking changes in the admin interface, but fu
 - Added validation error messages for admin settings
 - Better array validation for remote posts response
 
-## [2.7.1] - 2024-10-17
+## [2.7.1] - 2025-10-17
 
 ### Fixed
 - Fixed namespace inconsistency in hook registrations (plugins_loaded, plugin_action_links, shortcode)
