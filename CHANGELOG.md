@@ -5,6 +5,19 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.1] - 2025-10-25
+
+### Fixed
+- Replaced deprecated `date_i18n()` with modern `wp_date()` function for better timezone handling
+- Removed overly specific CSS selectors targeting post ID #1423
+- Added generic `.embed-posts-inline` class for reusable inline image layouts
+
+### Improved
+- Added REST API endpoint URL validation with warning messages
+- Added check for "wp-json" in endpoint URL to ensure valid WordPress REST API
+- Improved CSS portability across different sites and themes
+- Better responsive design for inline image layouts
+
 ## [2.8.0] - 2025-10-25
 
 ### Fixed
