@@ -5,6 +5,60 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2025-10-25
+
+### 🚀 Major Feature: Multi-Source Feed Support
+
+This is a **major release** with breaking changes in the admin interface, but full backward compatibility for existing installations.
+
+### Added
+- **Multiple feed source management** - Configure and manage unlimited REST API sources
+- **New admin interface** with tabbed navigation:
+  - **Feed Sources tab** - Add, edit, delete, and manage multiple sources
+  - **Legacy Settings tab** - Backward compatible single-source settings
+  - **Cache Management tab** - Dedicated cache clearing interface
+- **Source-specific shortcodes** - Use `[posts_embedder source="source-id"]` to display different feeds
+- **Source enable/disable toggle** - Control which sources are active
+- **Source metadata** - Each source has unique ID, name, endpoint, and post count
+- **Automatic migration** - Existing single-source configurations automatically migrate to new format
+- **Visual source status indicators** - See at a glance which sources are enabled/disabled
+
+### Changed
+- Admin interface completely redesigned with tabbed navigation
+- Settings page now focuses on multi-source management
+- Old single-source settings moved to "Legacy Settings" tab
+- Cache management moved to dedicated tab
+
+### Technical Details
+- New database option: `rest_posts_embedder_sources` (array of source configurations)
+- Source structure: `id`, `name`, `endpoint`, `count`, `enabled`
+- Shortcode accepts new `source` parameter
+- Full backward compatibility maintained for existing installations
+
+### Usage Examples
+
+**Display default source (backward compatible):**
+```
+[posts_embedder]
+```
+
+**Display specific source:**
+```
+[posts_embedder source="my-blog"]
+[posts_embedder source="news-feed"]
+[posts_embedder source="portfolio-posts"]
+```
+
+**Override source settings:**
+```
+[posts_embedder source="my-blog" count="10"]
+```
+
+### Migration Notes
+- Existing single-source configurations automatically convert to a "default" source on activation
+- Legacy settings still work and are available in the "Legacy Settings" tab
+- No action required from users - everything continues to work as before
+
 ## [2.9.0] - 2025-10-25
 
 ### Added
