@@ -5,6 +5,103 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2025-10-25
+
+### Summary
+Complete admin interface overhaul with styling controls, custom CSS, configurable caching, and comprehensive documentation. This version represents the culmination of all v3.x improvements.
+
+### All Features from v3.1.0 - v3.4.0
+- Comprehensive API endpoint documentation
+- Styling tab with column controls
+- Custom CSS support
+- Configurable cache expiration
+- Enhanced user experience throughout
+
+---
+
+## [3.4.0] - 2025-10-25
+
+### Added
+- **Configurable Cache Expiration** - Choose how long to cache API responses:
+  - Preset options: 1 hour, 3 hours, 6 hours, 12 hours, 24 hours
+  - Custom hours option (1-168 hours / 1 week maximum)
+  - Dynamic JavaScript to show/hide custom hours field
+- New function: `get_cache_expiration()` to calculate cache time dynamically
+
+### Changed
+- Cache Management tab reorganized with separate sections
+- Cache duration no longer hardcoded to 1 hour
+- Shortcode now uses configurable cache expiration
+
+### Technical Details
+- New options: `embed_posts_cache_expiration`, `embed_posts_cache_custom_hours`
+- Dynamic cache calculation based on user selection
+- Supports preset and custom durations
+
+---
+
+## [3.3.0] - 2025-10-25
+
+### Added
+- **Custom CSS Textarea** in Styling tab
+  - Large code-formatted textarea for custom styles
+  - Helpful examples and usage instructions
+  - Automatically enqueued on frontend
+  - No need for `<style>` tags
+- Custom CSS sanitization and validation
+
+### Technical Details
+- New option: `embed_posts_custom_css`
+- Inline CSS injection via `wp_add_inline_style()`
+- Automatic sanitization with `wp_strip_all_tags()`
+
+---
+
+## [3.2.0] - 2025-10-25
+
+### Added
+- **Column Configuration** for responsive grid layouts:
+  - Desktop columns: 1-5 columns (default: 2)
+  - Mobile columns: 1-3 columns (default: 1)
+  - Responsive breakpoint at 768px
+- Dynamic CSS grid generation based on settings
+- Column validation with min/max constraints
+
+### Changed
+- CSS grid columns now dynamically set via inline CSS
+- Removed hardcoded `auto-fit` grid template
+
+### Technical Details
+- New options: `embed_posts_columns_desktop`, `embed_posts_columns_mobile`
+- New sanitization functions: `sanitize_columns_desktop()`, `sanitize_columns_mobile()`
+- Inline CSS generated on every page load with current settings
+
+---
+
+## [3.1.0] - 2025-10-25
+
+### Added
+- **Comprehensive API Endpoint Documentation** in Feed Sources tab:
+  - How to construct REST API endpoint URLs
+  - Basic endpoint example with `?_embed` parameter
+  - Filter by categories with example (`?categories=111`)
+  - Filter by tags with example (`?tags=222`)
+  - Combine multiple filters example
+  - Instructions on finding category/tag IDs in WordPress admin
+  - Note about importance of `?_embed` parameter
+- Info box with prominent styling and clear examples
+
+### Changed
+- Renamed "Legacy Settings" tab to "Styling"
+- Removed REST API Endpoint field from Styling tab
+- Endpoint configuration now only in Feed Sources tab
+- Improved admin interface organization
+
+### Improved
+- Better user guidance throughout admin
+- Clearer separation of concerns between tabs
+- More helpful field descriptions
+
 ## [3.0.0] - 2025-10-25
 
 ### 🚀 Major Feature: Multi-Source Feed Support

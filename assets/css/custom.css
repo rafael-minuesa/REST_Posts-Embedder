@@ -51,7 +51,7 @@ hr.image {
 /* Posts Grid Layout */
 .embed-posts-wrapper {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    /* Column configuration is set dynamically via inline CSS */
     grid-gap: var(--grid-gap);
 }
 

@@ -196,8 +196,9 @@ function rest_posts_embedder($atts = array()) {
      */
     $allposts = apply_filters('rest_posts_embedder_output', $allposts, $atts);
 
-    // Cache the result
-    set_transient($cache_key, $allposts, REST_POSTS_EMBEDDER_CACHE_EXPIRATION);
+    // Cache the result using configured expiration
+    $cache_expiration = \RestPostsEmbedder\Admin\get_cache_expiration();
+    set_transient($cache_key, $allposts, $cache_expiration);
 
     return $allposts;
 }
@@ -214,5 +215,30 @@ function display_posts_enqueue_styles() {
 
     // Enqueue the CSS file with dynamic version
     wp_enqueue_style( 'display-posts-style', $css_path, array(), REST_POSTS_EMBEDDER_VERSION, 'all' );
+
+    // Add inline CSS for column configuration
+    $columns_desktop = absint(get_option('embed_posts_columns_desktop', 2));
+    $columns_mobile = absint(get_option('embed_posts_columns_mobile', 1));
+
+    $inline_css = "
+    /* Column configuration */
+    .embed-posts-wrapper {
+        grid-template-columns: repeat({$columns_desktop}, 1fr);
+    }
+
+    @media only screen and (max-width: 768px) {
+        .embed-posts-wrapper {
+            grid-template-columns: repeat({$columns_mobile}, 1fr);
+        }
+    }
+    ";
+
+    // Add custom CSS if provided
+    $custom_css = get_option('embed_posts_custom_css', '');
+    if (!empty($custom_css)) {
+        $inline_css .= "\n\n/* Custom CSS */\n" . $custom_css;
+    }
+
+    wp_add_inline_style('display-posts-style', $inline_css);
 }
 add_action( 'wp_enqueue_scripts', 'RestPostsEmbedder\\Shortcodes\\display_posts_enqueue_styles' );
