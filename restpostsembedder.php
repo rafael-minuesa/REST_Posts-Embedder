@@ -5,7 +5,7 @@
  * Plugin URI:  https://prowoos.com/
  * Author:      Rafael Minuesa
  * Author URI:  https://www.linkedin.com/in/rafaelminuesa/
- * Version:     2.9.0
+ * Version:     3.0.0
  * Text Domain: restpostsembedder
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Define plugin constants
 if (!defined('REST_POSTS_EMBEDDER_VERSION')) {
-    define('REST_POSTS_EMBEDDER_VERSION', '2.9.0');
+    define('REST_POSTS_EMBEDDER_VERSION', '3.0.0');
 }
 if (!defined('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT')) {
     define('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT', 'https://prowoos.com/wp-json/wp/v2/posts?_embed');
@@ -54,14 +54,54 @@ add_action('plugins_loaded', 'RestPostsEmbedder\\rest_posts_embedder_load_textdo
 
 /**
  * Plugin activation hook.
- * Sets up default options on activation.
+ * Sets up default options on activation and migrates old settings.
  *
  * @since 1.0.0
  * @return void
  */
 function rest_posts_embedder_activate() {
-    add_option('embed_posts_endpoint', REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT);
-    add_option('embed_posts_count', REST_POSTS_EMBEDDER_DEFAULT_COUNT);
+    // Check if we need to migrate from old single-source format
+    $sources = get_option('rest_posts_embedder_sources', array());
+
+    if (empty($sources)) {
+        // Check if old format exists
+        $old_endpoint = get_option('embed_posts_endpoint', '');
+        $old_count = get_option('embed_posts_count', REST_POSTS_EMBEDDER_DEFAULT_COUNT);
+
+        if (!empty($old_endpoint)) {
+            // Migrate old settings to new format
+            $sources = array(
+                'default' => array(
+                    'id' => 'default',
+                    'name' => __('Default Source', 'restpostsembedder'),
+                    'endpoint' => $old_endpoint,
+                    'count' => $old_count,
+                    'enabled' => true
+                )
+            );
+        } else {
+            // Create default source
+            $sources = array(
+                'default' => array(
+                    'id' => 'default',
+                    'name' => __('Default Source', 'restpostsembedder'),
+                    'endpoint' => REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT,
+                    'count' => REST_POSTS_EMBEDDER_DEFAULT_COUNT,
+                    'enabled' => true
+                )
+            );
+        }
+
+        update_option('rest_posts_embedder_sources', $sources);
+    }
+
+    // Keep old options for backward compatibility
+    if (!get_option('embed_posts_endpoint')) {
+        add_option('embed_posts_endpoint', REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT);
+    }
+    if (!get_option('embed_posts_count')) {
+        add_option('embed_posts_count', REST_POSTS_EMBEDDER_DEFAULT_COUNT);
+    }
 }
 register_activation_hook(__FILE__, 'RestPostsEmbedder\\rest_posts_embedder_activate');
 

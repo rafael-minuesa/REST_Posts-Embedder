@@ -18,9 +18,37 @@ namespace RestPostsEmbedder\Shortcodes;
 function rest_posts_embedder($atts = array()) {
     // Allow overriding of settings via shortcode attributes
     $atts = shortcode_atts(array(
+        'source' => '',  // New: source ID for multi-source support
         'endpoint' => get_option('embed_posts_endpoint'),
         'count' => get_option('embed_posts_count', REST_POSTS_EMBEDDER_DEFAULT_COUNT)
     ), $atts, 'posts_embedder');
+
+    // NEW: Multi-source support
+    if (!empty($atts['source'])) {
+        $sources = get_option('rest_posts_embedder_sources', array());
+        $source_id = sanitize_key($atts['source']);
+
+        if (isset($sources[$source_id])) {
+            $source = $sources[$source_id];
+
+            // Check if source is enabled
+            if (!$source['enabled']) {
+                return '<p>' . sprintf(
+                    __('The requested feed source "%s" is currently disabled.', 'restpostsembedder'),
+                    esc_html($source['name'])
+                ) . '</p>';
+            }
+
+            // Use source configuration
+            $atts['endpoint'] = $source['endpoint'];
+            $atts['count'] = $source['count'];
+        } else {
+            return '<p>' . sprintf(
+                __('Feed source "%s" not found. Please check your source ID in the plugin settings.', 'restpostsembedder'),
+                esc_html($source_id)
+            ) . '</p>';
+        }
+    }
 
     // Validate inputs
     $endpoint = esc_url_raw($atts['endpoint']);
