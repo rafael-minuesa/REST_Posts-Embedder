@@ -5,6 +5,44 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2025-10-25
+
+### Added
+- **API Endpoint Documentation** in Feed Sources tab with examples for filtering by categories and tags
+- **Styling Tab** (replaces Legacy Settings) with new display options:
+  - Column configuration for desktop (1-5 columns)
+  - Column configuration for mobile (1-3 columns)
+  - Custom CSS textarea for easy style customization
+- **Cache Expiration Settings** - Choose cache duration:
+  - Preset options: 1h, 3h, 6h, 12h, 24h
+  - Custom hours option (1-168 hours / 1 week max)
+  - Dynamic JavaScript to show/hide custom hours field
+- **Dynamic column support** via inline CSS based on settings
+- **Custom CSS** automatically enqueued from settings
+
+### Changed
+- Renamed "Legacy Settings" tab to "Styling"
+- Removed REST API Endpoint field from Styling tab (now only in Feed Sources)
+- Cache expiration now configurable instead of hardcoded to 1 hour
+- CSS grid columns now dynamically set based on admin settings
+- Improved admin interface with better documentation and help text
+
+### Improved
+- Feed Sources tab now includes comprehensive documentation on:
+  - How to construct REST API endpoint URLs
+  - How to filter by categories with examples
+  - How to filter by tags with examples
+  - How to combine multiple filters
+- Cache Management tab reorganized with separate sections for clearing and expiration
+- Better user guidance throughout admin interface
+
+### Technical Details
+- New options: `embed_posts_columns_desktop`, `embed_posts_columns_mobile`, `embed_posts_custom_css`
+- New options: `embed_posts_cache_expiration`, `embed_posts_cache_custom_hours`
+- New function: `get_cache_expiration()` to calculate cache time
+- Inline CSS generation for columns and custom styles
+- Dynamic cache expiration based on user settings
+
 ## [3.0.0] - 2025-10-25
 
 ### 🚀 Major Feature: Multi-Source Feed Support
