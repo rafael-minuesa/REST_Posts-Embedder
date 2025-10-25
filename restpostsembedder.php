@@ -5,7 +5,7 @@
  * Plugin URI:  https://prowoos.com/
  * Author:      Rafael Minuesa
  * Author URI:  https://www.linkedin.com/in/rafaelminuesa/
- * Version:     2.8.1
+ * Version:     2.9.0
  * Text Domain: restpostsembedder
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
@@ -21,28 +21,58 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// Load text domain for internationalization
+// Define plugin constants
+if (!defined('REST_POSTS_EMBEDDER_VERSION')) {
+    define('REST_POSTS_EMBEDDER_VERSION', '2.9.0');
+}
+if (!defined('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT')) {
+    define('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT', 'https://prowoos.com/wp-json/wp/v2/posts?_embed');
+}
+if (!defined('REST_POSTS_EMBEDDER_DEFAULT_COUNT')) {
+    define('REST_POSTS_EMBEDDER_DEFAULT_COUNT', 5);
+}
+if (!defined('REST_POSTS_EMBEDDER_MIN_COUNT')) {
+    define('REST_POSTS_EMBEDDER_MIN_COUNT', 1);
+}
+if (!defined('REST_POSTS_EMBEDDER_MAX_COUNT')) {
+    define('REST_POSTS_EMBEDDER_MAX_COUNT', 20);
+}
+if (!defined('REST_POSTS_EMBEDDER_CACHE_EXPIRATION')) {
+    define('REST_POSTS_EMBEDDER_CACHE_EXPIRATION', HOUR_IN_SECONDS);
+}
+
+/**
+ * Load plugin text domain for internationalization.
+ *
+ * @since 2.9.0
+ * @return void
+ */
 function rest_posts_embedder_load_textdomain() {
     load_plugin_textdomain('restpostsembedder', false, dirname(plugin_basename(__FILE__)) . '/languages');
 }
 add_action('plugins_loaded', 'RestPostsEmbedder\\rest_posts_embedder_load_textdomain');
 
-// Activation hook
-// register_activation_hook(__FILE__, 'rest_posts_embedder_activate');
+/**
+ * Plugin activation hook.
+ * Sets up default options on activation.
+ *
+ * @since 1.0.0
+ * @return void
+ */
+function rest_posts_embedder_activate() {
+    add_option('embed_posts_endpoint', REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT);
+    add_option('embed_posts_count', REST_POSTS_EMBEDDER_DEFAULT_COUNT);
+}
 register_activation_hook(__FILE__, 'RestPostsEmbedder\\rest_posts_embedder_activate');
 
-function rest_posts_embedder_activate() {
-    // Perform any necessary setup tasks
-    add_option('embed_posts_endpoint', 'https://prowoos.com/wp-json/wp/v2/posts?_embed');
-    add_option('embed_posts_count', 5);
-}
-
-// Deactivation hook
-// register_deactivation_hook(__FILE__, 'rest_posts_embedder_deactivate');
-register_deactivation_hook(__FILE__, 'RestPostsEmbedder\\rest_posts_embedder_deactivate');
-
+/**
+ * Plugin deactivation hook.
+ * Cleans up all plugin transients on deactivation.
+ *
+ * @since 1.0.0
+ * @return void
+ */
 function rest_posts_embedder_deactivate() {
-    // Perform cleanup tasks - delete all plugin transients
     global $wpdb;
     $wpdb->query(
         $wpdb->prepare(
@@ -52,19 +82,28 @@ function rest_posts_embedder_deactivate() {
         )
     );
 }
+register_deactivation_hook(__FILE__, 'RestPostsEmbedder\\rest_posts_embedder_deactivate');
 
-// Uninstall hook
-// register_uninstall_hook(__FILE__, 'rest_posts_embedder_uninstall');
-register_uninstall_hook(__FILE__, 'RestPostsEmbedder\\rest_posts_embedder_uninstall');
-
-
+/**
+ * Plugin uninstall hook.
+ * Removes all plugin-related data from database.
+ *
+ * @since 1.0.0
+ * @return void
+ */
 function rest_posts_embedder_uninstall() {
-    // Remove all plugin-related data
     delete_option('embed_posts_endpoint');
     delete_option('embed_posts_count');
 }
+register_uninstall_hook(__FILE__, 'RestPostsEmbedder\\rest_posts_embedder_uninstall');
 
-// Add settings link on plugin page
+/**
+ * Add settings link to plugin action links.
+ *
+ * @since 1.0.0
+ * @param array $links Existing plugin action links.
+ * @return array Modified plugin action links.
+ */
 function rest_posts_embedder_settings_link($links) {
     $settings_link = '<a href="' . admin_url('options-general.php?page=embed-posts-settings') . '">' . __('Settings', 'restpostsembedder') . '</a>';
     array_unshift($links, $settings_link);

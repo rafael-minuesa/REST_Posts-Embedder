@@ -1,18 +1,49 @@
 <?php
+/**
+ * Shortcode functions for REST Posts Embedder.
+ *
+ * @package restpostsembedder
+ * @since 1.0.0
+ */
 
 namespace RestPostsEmbedder\Shortcodes;
 
+/**
+ * Main shortcode handler for displaying REST API posts.
+ *
+ * @since 1.0.0
+ * @param array $atts Shortcode attributes.
+ * @return string HTML output of the embedded posts.
+ */
 function rest_posts_embedder($atts = array()) {
     // Allow overriding of settings via shortcode attributes
     $atts = shortcode_atts(array(
         'endpoint' => get_option('embed_posts_endpoint'),
-        'count' => get_option('embed_posts_count', 5)
+        'count' => get_option('embed_posts_count', REST_POSTS_EMBEDDER_DEFAULT_COUNT)
     ), $atts, 'posts_embedder');
 
     // Validate inputs
     $endpoint = esc_url_raw($atts['endpoint']);
     $count = absint($atts['count']);
-    $count = ($count > 0 && $count <= 20) ? $count : 5;
+    $count = ($count > 0 && $count <= REST_POSTS_EMBEDDER_MAX_COUNT) ? $count : REST_POSTS_EMBEDDER_DEFAULT_COUNT;
+
+    /**
+     * Filter the validated endpoint URL before making the API request.
+     *
+     * @since 2.9.0
+     * @param string $endpoint The validated endpoint URL.
+     * @param array  $atts     The shortcode attributes.
+     */
+    $endpoint = apply_filters('rest_posts_embedder_endpoint', $endpoint, $atts);
+
+    /**
+     * Filter the validated post count before making the API request.
+     *
+     * @since 2.9.0
+     * @param int   $count The validated post count.
+     * @param array $atts  The shortcode attributes.
+     */
+    $count = apply_filters('rest_posts_embedder_count', $count, $atts);
 
     // Check if endpoint is valid
     if (empty($endpoint)) {
@@ -37,13 +68,21 @@ function rest_posts_embedder($atts = array()) {
 
     // Error handling
     if (is_wp_error($response)) {
-        error_log('REST Posts Embedder Error: ' . $response->get_error_message());
-        return '<p>' . __('Unable to fetch posts. Please try again later.', 'restpostsembedder') . '</p>';
+        $error_message = $response->get_error_message();
+        error_log('REST Posts Embedder Error: ' . $error_message . ' | Endpoint: ' . $endpoint);
+        return '<p>' . sprintf(
+            __('Unable to fetch posts. Error: %s. Please check your endpoint URL in the plugin settings.', 'restpostsembedder'),
+            esc_html($error_message)
+        ) . '</p>';
     }
 
-    if (wp_remote_retrieve_response_code($response) !== 200) {
-        error_log('REST Posts Embedder HTTP Error: ' . wp_remote_retrieve_response_code($response));
-        return '<p>' . __('Unable to fetch posts. Server returned an error.', 'restpostsembedder') . '</p>';
+    $response_code = wp_remote_retrieve_response_code($response);
+    if ($response_code !== 200) {
+        error_log('REST Posts Embedder HTTP Error: ' . $response_code . ' | Endpoint: ' . $endpoint);
+        return '<p>' . sprintf(
+            __('Unable to fetch posts. Server returned HTTP error %d. Please verify the endpoint URL is correct.', 'restpostsembedder'),
+            $response_code
+        ) . '</p>';
     }
 
     // Parse response
@@ -85,7 +124,7 @@ function rest_posts_embedder($atts = array()) {
         $excerpt = isset($remote_post->excerpt->rendered) ? wp_kses_post($remote_post->excerpt->rendered) : '';
 
         // Build post HTML
-        $allposts .= '<div class="wrapper">
+        $post_html = '<div class="wrapper">
                         <div class="embed-posts-wrapper">
                             <article class="embed-posts">
                                 <a href="' . $link . '" target="_blank" rel="noopener noreferrer">
@@ -97,7 +136,7 @@ function rest_posts_embedder($atts = array()) {
                                 '</small>
                                 <p class="embed-post-content">
                                     <a href="' . $link . '" target="_blank" rel="noopener noreferrer">
-                                        ' . ($thumb_url ? '<img src="' . $thumb_url . '" alt="' . $title . '" />' : '') . '
+                                        ' . ($thumb_url ? '<img src="' . $thumb_url . '" alt="' . esc_attr($title) . '" loading="lazy" />' : '') . '
                                     </a>
                                     ' . $excerpt . '
                                     <a href="' . $link . '" target="_blank" rel="noopener noreferrer" class="read-more">
@@ -107,19 +146,45 @@ function rest_posts_embedder($atts = array()) {
                             </article>
                         </div>
                     </div>';
+
+        /**
+         * Filter the HTML for individual post.
+         *
+         * @since 2.9.0
+         * @param string $post_html   The post HTML.
+         * @param object $remote_post The remote post object.
+         */
+        $post_html = apply_filters('rest_posts_embedder_post_html', $post_html, $remote_post);
+
+        $allposts .= $post_html;
     }
 
-    // Cache the result for 1 hour
-    set_transient($cache_key, $allposts, HOUR_IN_SECONDS);
+    /**
+     * Filter the complete HTML output before caching.
+     *
+     * @since 2.9.0
+     * @param string $allposts The complete HTML output.
+     * @param array  $atts     The shortcode attributes.
+     */
+    $allposts = apply_filters('rest_posts_embedder_output', $allposts, $atts);
+
+    // Cache the result
+    set_transient($cache_key, $allposts, REST_POSTS_EMBEDDER_CACHE_EXPIRATION);
 
     return $allposts;
 }
 
+/**
+ * Enqueue the plugin's CSS styles.
+ *
+ * @since 1.0.0
+ * @return void
+ */
 function display_posts_enqueue_styles() {
     // Define the path to the CSS file
     $css_path = plugin_dir_url( dirname(__FILE__) ) . 'assets/css/custom.css';
 
     // Enqueue the CSS file with dynamic version
-    wp_enqueue_style( 'display-posts-style', $css_path, array(), '2.8.1', 'all' );
+    wp_enqueue_style( 'display-posts-style', $css_path, array(), REST_POSTS_EMBEDDER_VERSION, 'all' );
 }
 add_action( 'wp_enqueue_scripts', 'RestPostsEmbedder\\Shortcodes\\display_posts_enqueue_styles' );
