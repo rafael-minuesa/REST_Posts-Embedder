@@ -5,7 +5,7 @@
  * Plugin URI:  https://prowoos.com/
  * Author:      Rafael Minuesa
  * Author URI:  https://www.linkedin.com/in/rafaelminuesa/
- * Version:     3.0.1
+ * Version:     3.5.0
  * Text Domain: restpostsembedder
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Define plugin constants
 if (!defined('REST_POSTS_EMBEDDER_VERSION')) {
-    define('REST_POSTS_EMBEDDER_VERSION', '3.0.1');
+    define('REST_POSTS_EMBEDDER_VERSION', '3.5.0');
 }
 if (!defined('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT')) {
     define('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT', 'https://prowoos.com/wp-json/wp/v2/posts?_embed');
