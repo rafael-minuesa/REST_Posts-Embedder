@@ -9,10 +9,10 @@ function embed_posts_settings_page() {
         __('REST Posts Embedder', 'restpostsembedder'),
         'manage_options',
         'embed-posts-settings',
-        'embed_posts_settings_page_html'
+        'RestPostsEmbedder\\Admin\\embed_posts_settings_page_html'
     );
 }
-add_action('admin_menu', 'embed_posts_settings_page');
+add_action('admin_menu', 'RestPostsEmbedder\\Admin\\embed_posts_settings_page');
 
 // The HTML for the settings page
 function embed_posts_settings_page_html() {
@@ -31,41 +31,41 @@ function embed_posts_settings_page_html() {
             <table class="form-table">
                 <tr valign="top">
                     <th scope="row">
-                        <label for="embed_posts_endpoint"><?php _e('REST API Endpoint', 'restpostsembedder'); ?></label>
+                        <label for="embed_posts_endpoint"><?php esc_html_e('REST API Endpoint', 'restpostsembedder'); ?></label>
                     </th>
                     <td>
-                        <input type="text" 
-                               id="embed_posts_endpoint" 
-                               name="embed_posts_endpoint" 
-                               value="<?php echo esc_attr(get_option('embed_posts_endpoint')); ?>" 
-                               class="regular-text" 
-                               placeholder="https://example.com/wp-json/wp/v2/posts?_embed" 
+                        <input type="text"
+                               id="embed_posts_endpoint"
+                               name="embed_posts_endpoint"
+                               value="<?php echo esc_attr(get_option('embed_posts_endpoint')); ?>"
+                               class="regular-text"
+                               placeholder="https://example.com/wp-json/wp/v2/posts?_embed"
                         />
                         <p class="description">
-                            <?php _e('Enter the full REST API endpoint URL to fetch posts from.', 'restpostsembedder'); ?>
+                            <?php esc_html_e('Enter the full REST API endpoint URL to fetch posts from.', 'restpostsembedder'); ?>
                         </p>
                     </td>
                 </tr>
                 <tr valign="top">
                     <th scope="row">
-                        <label for="embed_posts_count"><?php _e('Number of Posts', 'restpostsembedder'); ?></label>
+                        <label for="embed_posts_count"><?php esc_html_e('Number of Posts', 'restpostsembedder'); ?></label>
                     </th>
                     <td>
-                        <input type="number" 
-                               id="embed_posts_count" 
-                               name="embed_posts_count" 
-                               value="<?php echo esc_attr(get_option('embed_posts_count', 5)); ?>" 
-                               min="1" 
-                               max="20" 
-                               class="small-text" 
+                        <input type="number"
+                               id="embed_posts_count"
+                               name="embed_posts_count"
+                               value="<?php echo esc_attr(get_option('embed_posts_count', 5)); ?>"
+                               min="1"
+                               max="20"
+                               class="small-text"
                         />
                         <p class="description">
-                            <?php _e('How many posts to display (1-20).', 'restpostsembedder'); ?>
+                            <?php esc_html_e('How many posts to display (1-20).', 'restpostsembedder'); ?>
                         </p>
                     </td>
                 </tr>
             </table>
-            <?php submit_button(__('Save Settings', 'restpostsembedder')); ?>
+            <?php submit_button(esc_html__('Save Settings', 'restpostsembedder')); ?>
         </form>
     </div>
     <?php
@@ -81,8 +81,23 @@ function embed_posts_settings_init() {
 
     register_setting('embed_posts_settings', 'embed_posts_count', array(
         'type' => 'number',
-        'sanitize_callback' => 'absint',
+        'sanitize_callback' => 'RestPostsEmbedder\\Admin\\sanitize_posts_count',
         'default' => 5
     ));
 }
-add_action('admin_init', 'embed_posts_settings_init');
+add_action('admin_init', 'RestPostsEmbedder\\Admin\\embed_posts_settings_init');
+
+// Server-side validation for post count
+function sanitize_posts_count($value) {
+    $count = absint($value);
+    if ($count < 1 || $count > 20) {
+        add_settings_error(
+            'embed_posts_count',
+            'invalid_count',
+            __('Number of posts must be between 1 and 20.', 'restpostsembedder'),
+            'error'
+        );
+        return get_option('embed_posts_count', 5);
+    }
+    return $count;
+}

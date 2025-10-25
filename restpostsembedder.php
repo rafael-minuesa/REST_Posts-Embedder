@@ -5,7 +5,7 @@
  * Plugin URI:  https://prowoos.com/
  * Author:      Rafael Minuesa
  * Author URI:  https://www.linkedin.com/in/rafaelminuesa/
- * Version:     2.7.1
+ * Version:     2.8.0
  * Text Domain: restpostsembedder
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt

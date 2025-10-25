@@ -5,6 +5,20 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2025-10-25
+
+### Fixed
+- Fixed namespace issues in admin and shortcode action/filter hooks
+- Added server-side validation for post count (1-20 range)
+- Added JSON decode error handling with proper error messages
+- Replaced deprecated `_e()` translation functions with `esc_html_e()`
+- Updated CSS versioning to use plugin version instead of hardcoded value
+
+### Improved
+- Enhanced error handling with specific messages for JSON parsing failures
+- Added validation error messages for admin settings
+- Better array validation for remote posts response
+
 ## [2.7.1] - 2025-10-25
 
 ### Fixed
