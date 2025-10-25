@@ -82,7 +82,7 @@ Complete admin interface overhaul with styling controls, custom CSS, configurabl
 
 ---
 
-## [3.2.0] - 2025-10-25
+## [3.2.0] - 2025-10-24
 
 ### Added
 - **Column Configuration** for responsive grid layouts:
@@ -103,7 +103,7 @@ Complete admin interface overhaul with styling controls, custom CSS, configurabl
 
 ---
 
-## [3.1.0] - 2025-10-25
+## [3.1.0] - 2025-10-23
 
 ### Added
 - **Comprehensive API Endpoint Documentation** in Feed Sources tab:
@@ -127,7 +127,7 @@ Complete admin interface overhaul with styling controls, custom CSS, configurabl
 - Clearer separation of concerns between tabs
 - More helpful field descriptions
 
-## [3.0.0] - 2025-10-25
+## [3.0.0] - 2025-10-22
 
 ### 🚀 Major Feature: Multi-Source Feed Support
 
@@ -181,7 +181,7 @@ This is a **major release** with breaking changes in the admin interface, but fu
 - Legacy settings still work and are available in the "Legacy Settings" tab
 - No action required from users - everything continues to work as before
 
-## [2.9.0] - 2025-10-25
+## [2.9.0] - 2025-10-21
 
 ### Added
 - **PHPDoc comments** for all functions with detailed descriptions and parameters
@@ -208,7 +208,7 @@ This is a **major release** with breaking changes in the admin interface, but fu
 - Enhanced validation error messages with context and ranges
 - Cache expiration now uses constant instead of hardcoded value
 
-## [2.8.1] - 2025-10-25
+## [2.8.1] - 2025-10-10
 
 ### Fixed
 - Replaced deprecated `date_i18n()` with modern `wp_date()` function for better timezone handling
@@ -221,7 +221,7 @@ This is a **major release** with breaking changes in the admin interface, but fu
 - Improved CSS portability across different sites and themes
 - Better responsive design for inline image layouts
 
-## [2.8.0] - 2025-10-25
+## [2.8.0] - 2025-10-20
 
 ### Fixed
 - Fixed namespace issues in admin and shortcode action/filter hooks
@@ -235,7 +235,7 @@ This is a **major release** with breaking changes in the admin interface, but fu
 - Added validation error messages for admin settings
 - Better array validation for remote posts response
 
-## [2.7.1] - 2025-10-25
+## [2.7.1] - 2025-10-17
 
 ### Fixed
 - Fixed namespace inconsistency in hook registrations (plugins_loaded, plugin_action_links, shortcode)
@@ -245,5 +245,19 @@ This is a **major release** with breaking changes in the admin interface, but fu
 ### Security
 - Added rel="noopener noreferrer" to all external links to prevent tabnabbing attacks
 
-## [2.7.0] - Previous Release
+## [2.7.0] - 2024-12-14
 - Enhanced features (existing version)
+
+## [2.0.1] - 2023-11-10
+- Added internationalization support
+- Improved error handling
+- Enhanced caching mechanism
+
+## [1.5.2] - 2022-10-25
+- Enhanced features (existing version)
+
+## [1.4.0] - 2022-10-28
+- Added admin panel
+
+## [1.0] - 2022-10-11 
+- Initial release

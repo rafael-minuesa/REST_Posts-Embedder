@@ -35,20 +35,3 @@ Yes, use the shortcode attribute: `[posts_embedder count="10"]`
 == Screenshots ==
 1. Plugin settings page
 2. Example of embedded posts
-
-== Changelog ==
-= 1.5 =
-* Added internationalization support
-* Improved error handling
-* Enhanced caching mechanism
-* Added more configuration options
-
-= 1.4 =
-* Added admin panel
-
-= 1.0 =
-* Initial release
-
-== Upgrade Notice ==
-= 1.5 =
-Significant improvements in performance and flexibility. Recommended upgrade.
