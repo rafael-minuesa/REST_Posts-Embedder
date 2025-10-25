@@ -2,7 +2,7 @@
 /**
  * Plugin Name: REST Posts Embedder
  * Description: Embed posts from a specified REST API endpoint with enhanced features.
- * Plugin URI:  https://prowoos.com/
+ * Plugin URI:  https://github.com/rafael-minuesa/REST_Posts-Embedder
  * Author:      Rafael Minuesa
  * Author URI:  https://www.linkedin.com/in/rafaelminuesa/
  * Version:     3.5.0
