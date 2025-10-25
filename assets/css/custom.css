@@ -114,20 +114,22 @@ hr.image {
     text-decoration: underline;
 }
 
-/* Specific Elementor Section Styles (kept from original) */
-#post-1423 > div > div > div > div > section.elementor-section.elementor-top-section.elementor-element.elementor-element-e710200.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div > div > div > div.elementor-widget-wrap > div > div > div:nth-child(1) {
+/* Alternative Layout: Inline Image Style */
+.embed-posts-inline {
     width: 100%;
     margin: 2em 0 0;
 }
 
-#post-1423 > div > div > div > div > section.elementor-section.elementor-top-section.elementor-element.elementor-element-e710200.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div > div > div > div.elementor-widget-wrap > div > div > div:nth-child(1) img {
-    width: 35% !important;
+.embed-posts-inline img {
+    width: 35%;
     float: left;
     margin-right: 2em;
 }
 
 @media only screen and (max-width: 768px) {
-    #post-1423 > div > div > div > div > section.elementor-section.elementor-top-section.elementor-element.elementor-element-e710200.elementor-section-stretched.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default > div > div > div > div > div.elementor-widget-wrap > div > div > div:nth-child(1) img {
-        width: 100% !important;
+    .embed-posts-inline img {
+        width: 100%;
+        float: none;
+        margin-right: 0;
     }
 }

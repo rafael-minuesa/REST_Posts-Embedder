@@ -75,7 +75,7 @@ function embed_posts_settings_page_html() {
 function embed_posts_settings_init() {
     register_setting('embed_posts_settings', 'embed_posts_endpoint', array(
         'type' => 'string',
-        'sanitize_callback' => 'esc_url_raw',
+        'sanitize_callback' => 'RestPostsEmbedder\\Admin\\sanitize_endpoint_url',
         'default' => 'https://prowoos.com/wp-json/wp/v2/posts?_embed'
     ));
 
@@ -86,6 +86,33 @@ function embed_posts_settings_init() {
     ));
 }
 add_action('admin_init', 'RestPostsEmbedder\\Admin\\embed_posts_settings_init');
+
+// Server-side validation for endpoint URL
+function sanitize_endpoint_url($value) {
+    $url = esc_url_raw($value);
+
+    if (empty($url)) {
+        add_settings_error(
+            'embed_posts_endpoint',
+            'invalid_url',
+            __('Please enter a valid URL.', 'restpostsembedder'),
+            'error'
+        );
+        return get_option('embed_posts_endpoint', 'https://prowoos.com/wp-json/wp/v2/posts?_embed');
+    }
+
+    // Check if URL contains wp-json (WordPress REST API indicator)
+    if (strpos($url, 'wp-json') === false) {
+        add_settings_error(
+            'embed_posts_endpoint',
+            'not_rest_api',
+            __('Warning: URL does not appear to be a WordPress REST API endpoint (missing "wp-json").', 'restpostsembedder'),
+            'warning'
+        );
+    }
+
+    return $url;
+}
 
 // Server-side validation for post count
 function sanitize_posts_count($value) {

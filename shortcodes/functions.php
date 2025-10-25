@@ -65,7 +65,7 @@ function rest_posts_embedder($atts = array()) {
         // Safely extract post data
         $title = isset($remote_post->title->rendered) ? esc_html($remote_post->title->rendered) : __('Untitled', 'restpostsembedder');
         $link = isset($remote_post->link) ? esc_url($remote_post->link) : '';
-        $fordate = isset($remote_post->modified) ? date_i18n('jS \of F Y', strtotime($remote_post->modified)) : '';
+        $fordate = isset($remote_post->modified) ? wp_date('jS \of F Y', strtotime($remote_post->modified)) : '';
         
         // Featured image
         $thumb_url = '';
@@ -120,6 +120,6 @@ function display_posts_enqueue_styles() {
     $css_path = plugin_dir_url( dirname(__FILE__) ) . 'assets/css/custom.css';
 
     // Enqueue the CSS file with dynamic version
-    wp_enqueue_style( 'display-posts-style', $css_path, array(), '2.8.0', 'all' );
+    wp_enqueue_style( 'display-posts-style', $css_path, array(), '2.8.1', 'all' );
 }
 add_action( 'wp_enqueue_scripts', 'RestPostsEmbedder\\Shortcodes\\display_posts_enqueue_styles' );
