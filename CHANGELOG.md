@@ -5,7 +5,7 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.5.0] - 2025-10-25
+## [3.5.0] - 2025-10-26
 
 ### Summary
 Complete admin interface overhaul with styling controls, custom CSS, configurable caching, and comprehensive documentation. This version represents the culmination of all v3.x improvements.
@@ -57,7 +57,7 @@ Complete admin interface overhaul with styling controls, custom CSS, configurabl
 
 ---
 
-## [3.2.0] - 2025-10-25
+## [3.2.0] - 2025-10-24
 
 ### Added
 - **Column Configuration** for responsive grid layouts:
@@ -78,7 +78,7 @@ Complete admin interface overhaul with styling controls, custom CSS, configurabl
 
 ---
 
-## [3.1.0] - 2025-10-25
+## [3.1.0] - 2025-10-23
 
 ### Added
 - **Comprehensive API Endpoint Documentation** in Feed Sources tab:
@@ -102,7 +102,7 @@ Complete admin interface overhaul with styling controls, custom CSS, configurabl
 - Clearer separation of concerns between tabs
 - More helpful field descriptions
 
-## [3.0.0] - 2025-10-25
+## [3.0.0] - 2025-10-22
 
 ### 🚀 Major Feature: Multi-Source Feed Support
 
@@ -156,7 +156,7 @@ This is a **major release** with breaking changes in the admin interface, but fu
 - Legacy settings still work and are available in the "Legacy Settings" tab
 - No action required from users - everything continues to work as before
 
-## [2.9.0] - 2025-10-25
+## [2.9.0] - 2025-10-21
 
 ### Added
 - **PHPDoc comments** for all functions with detailed descriptions and parameters
@@ -183,7 +183,7 @@ This is a **major release** with breaking changes in the admin interface, but fu
 - Enhanced validation error messages with context and ranges
 - Cache expiration now uses constant instead of hardcoded value
 
-## [2.8.1] - 2025-10-22
+## [2.8.1] - 2025-10-10
 
 ### Fixed
 - Replaced deprecated `date_i18n()` with modern `wp_date()` function for better timezone handling
