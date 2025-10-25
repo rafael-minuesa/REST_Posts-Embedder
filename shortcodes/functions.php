@@ -126,14 +126,17 @@ function rest_posts_embedder($atts = array()) {
         return '<p>' . __('No posts found.', 'restpostsembedder') . '</p>';
     }
 
+    // Start wrapper and grid container ONCE before the loop
+    $allposts = '<div class="embed-posts-container">';
+    $allposts .= '<div class="embed-posts-wrapper">';
+
     // Generate post HTML
-    $allposts = '';
     foreach ($remote_posts as $remote_post) {
         // Safely extract post data
         $title = isset($remote_post->title->rendered) ? esc_html($remote_post->title->rendered) : __('Untitled', 'restpostsembedder');
         $link = isset($remote_post->link) ? esc_url($remote_post->link) : '';
         $fordate = isset($remote_post->modified) ? wp_date('jS \of F Y', strtotime($remote_post->modified)) : '';
-        
+
         // Featured image with multiple fallbacks
         $thumb_url = '';
         if (!empty($remote_post->featured_media) && isset($remote_post->_embedded->{'wp:featuredmedia'}[0])) {
@@ -162,29 +165,23 @@ function rest_posts_embedder($atts = array()) {
         // Excerpt
         $excerpt = isset($remote_post->excerpt->rendered) ? wp_kses_post($remote_post->excerpt->rendered) : '';
 
-        // Build post HTML
-        $post_html = '<div class="wrapper">
-                        <div class="embed-posts-wrapper">
-                            <article class="embed-posts">
-                                <a href="' . $link . '" target="_blank" rel="noopener noreferrer">
-                                    <h3>' . $title . '</h3>
-                                </a>
-                                <small>' . sprintf(__('%1$s, by %2$s', 'restpostsembedder'),
-                                    $fordate,
-                                    '<a href="' . $author_name_url . '" target="_blank" rel="noopener noreferrer">' . $author_name . '</a>') .
-                                '</small>
-                                <p class="embed-post-content">
-                                    <a href="' . $link . '" target="_blank" rel="noopener noreferrer">
-                                        ' . ($thumb_url ? '<img src="' . $thumb_url . '" alt="' . esc_attr($title) . '" loading="lazy" />' : '') . '
-                                    </a>
-                                    ' . $excerpt . '
-                                    <a href="' . $link . '" target="_blank" rel="noopener noreferrer" class="read-more">
-                                        <b>' . __('Read more...', 'restpostsembedder') . '</b>
-                                    </a>
-                                </p>
-                            </article>
+        // Build individual post HTML (article only, no wrappers)
+        $post_html = '<article class="embed-posts">
+                        <a href="' . $link . '" target="_blank" rel="noopener noreferrer">
+                            <h3>' . $title . '</h3>
+                        </a>
+                        <small>' . sprintf(__('%1$s, by %2$s', 'restpostsembedder'),
+                            $fordate,
+                            '<a href="' . $author_name_url . '" target="_blank" rel="noopener noreferrer">' . $author_name . '</a>') .
+                        '</small>
+                        <div class="embed-post-content">
+                            ' . ($thumb_url ? '<a href="' . $link . '" target="_blank" rel="noopener noreferrer"><img src="' . $thumb_url . '" alt="' . esc_attr($title) . '" loading="lazy" /></a>' : '') . '
+                            ' . $excerpt . '
+                            <a href="' . $link . '" target="_blank" rel="noopener noreferrer" class="read-more">
+                                <b>' . __('Read more...', 'restpostsembedder') . '</b>
+                            </a>
                         </div>
-                    </div>';
+                    </article>';
 
         /**
          * Filter the HTML for individual post.
@@ -197,6 +194,10 @@ function rest_posts_embedder($atts = array()) {
 
         $allposts .= $post_html;
     }
+
+    // Close the grid container and wrapper ONCE after the loop
+    $allposts .= '</div>'; // Close embed-posts-wrapper
+    $allposts .= '</div>'; // Close embed-posts-container
 
     /**
      * Filter the complete HTML output before caching.

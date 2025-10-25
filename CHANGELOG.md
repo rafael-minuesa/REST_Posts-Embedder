@@ -5,6 +5,20 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.2] - 2025-10-25
+
+### Fixed
+- **CRITICAL: Grid layout structure** - Fixed posts stacking vertically instead of displaying in columns
+- Moved `.wrapper` and `.embed-posts-wrapper` containers outside the foreach loop
+- Changed from N individual grid containers (one per post) to 1 grid container with N items
+- Grid columns now properly display posts side-by-side as configured
+
+### Technical Details
+- Restructured HTML in `shortcodes/functions.php`:
+  - Grid container now wraps all posts collectively instead of individually
+  - Each post is now an `<article>` element within a shared grid
+  - Proper CSS grid layout now functions as intended
+
 ## [3.5.1] - 2025-10-25
 
 ### Fixed
