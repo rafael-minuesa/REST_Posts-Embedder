@@ -40,11 +40,11 @@ function handle_source_actions() {
 
     // Handle delete source
     if (isset($_POST['delete_source']) && isset($_POST['source_id'])) {
-        if (!wp_verify_nonce($_POST['source_nonce'], 'manage_rest_embedder_source')) {
+        if (!isset($_POST['source_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['source_nonce'])), 'manage_rest_embedder_source')) {
             return;
         }
 
-        $source_id = sanitize_key($_POST['source_id']);
+        $source_id = sanitize_key(wp_unslash($_POST['source_id']));
         if (isset($sources[$source_id])) {
             unset($sources[$source_id]);
             update_option('rest_posts_embedder_sources', $sources);
@@ -59,14 +59,14 @@ function handle_source_actions() {
 
     // Handle add/edit source
     if (isset($_POST['save_source'])) {
-        if (!wp_verify_nonce($_POST['source_nonce'], 'manage_rest_embedder_source')) {
+        if (!isset($_POST['source_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['source_nonce'])), 'manage_rest_embedder_source')) {
             return;
         }
 
-        $source_id = isset($_POST['source_id']) ? sanitize_key($_POST['source_id']) : '';
-        $source_name = isset($_POST['source_name']) ? sanitize_text_field($_POST['source_name']) : '';
-        $source_endpoint = isset($_POST['source_endpoint']) ? esc_url_raw($_POST['source_endpoint']) : '';
-        $source_count = isset($_POST['source_count']) ? absint($_POST['source_count']) : REST_POSTS_EMBEDDER_DEFAULT_COUNT;
+        $source_id = isset($_POST['source_id']) ? sanitize_key(wp_unslash($_POST['source_id'])) : '';
+        $source_name = isset($_POST['source_name']) ? sanitize_text_field(wp_unslash($_POST['source_name'])) : '';
+        $source_endpoint = isset($_POST['source_endpoint']) ? esc_url_raw(wp_unslash($_POST['source_endpoint']), array('http', 'https')) : '';
+        $source_count = isset($_POST['source_count']) ? absint(wp_unslash($_POST['source_count'])) : REST_POSTS_EMBEDDER_DEFAULT_COUNT;
         $source_enabled = isset($_POST['source_enabled']) ? true : false;
 
         // Validate

@@ -5,6 +5,25 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.0] - 2026-06-14
+
+### Fixed
+- **"Unknown Author" on embedded posts** - the REST request now always forces `_embed`, so the author and featured image are returned inside `_embedded` regardless of whether the configured endpoint includes `?_embed`.
+- Author archive link now reads the embedded author's `link` property instead of the non-existent `source_url` (which only exists on media objects), so the byline links to the real author page.
+- Author name/link now degrade gracefully (no empty `href=""`) when a field is missing.
+
+### Added
+- **Self-hosted auto-updates** via a prowoos.com JSON manifest (`REST_Posts_Embedder_Update_Checker`). New releases appear on the wp-admin Plugins/Updates screen like any other plugin; supports `?force-check`.
+- **Spanish (es_ES) translation** plus a translatable byline date format, so the byline reads `8 de junio 2026, por Autor` on Spanish sites and `8th of June 2026, by Author` on English ones (driven by the site locale via `wp_date`/gettext).
+
+### Security
+- Restricted the shortcode `endpoint` attribute to `http`/`https` and added `wp_http_validate_url()` to reduce the SSRF surface from a shortcode-supplied URL.
+- Added `wp_unslash()` and `isset()` guards to the `$_POST`/nonce reads in the source add/edit/delete handler.
+
+### Changed
+- Retired the non-functional WordPress.org deploy workflow in favour of the self-hosted update channel.
+- `readme.txt` Stable tag corrected (was `1.5`, now matches the plugin version).
+
 ## [3.5.2] - 2025-10-25
 
 ### Fixed

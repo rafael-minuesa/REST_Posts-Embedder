@@ -6,3 +6,12 @@ msgstr ""
 "PO-Revision-Date: 2024-01-01 00:00+0000\n"
 "Last-Translator: Your Name <your.email@example.com>\n"
 "Language-Team: \n"
+
+#. Front-end byline date format (context). Translators: a PHP date() format
+#. string; localised catalogs may drop the English ordinal, e.g. "j \d\e F Y".
+msgctxt "embedded post date format"
+msgid "jS \of F Y"
+msgstr ""
+
+msgid "%1$s, by %2$s"
+msgstr ""

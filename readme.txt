@@ -1,10 +1,10 @@
 === REST Posts Embedder ===
 Contributors: Rafael Minuesa
-Donate link: https://peowoos.com/
+Donate link: https://prowoos.com/
 Tags: rest, api, posts, embed
 Requires at least: 5.0
-Tested up to: 6.4
-Stable tag: 1.5
+Tested up to: 6.9
+Stable tag: 3.6.0
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -35,3 +35,13 @@ Yes, use the shortcode attribute: `[posts_embedder count="10"]`
 == Screenshots ==
 1. Plugin settings page
 2. Example of embedded posts
+
+== Changelog ==
+= 3.6.0 =
+* Fixed "Unknown Author": the request now forces _embed and the author link reads the correct REST field.
+* Added Spanish (es_ES) translation and a locale-aware byline ("8 de junio 2026, por Autor").
+* Added self-hosted auto-updates via a hosted JSON manifest.
+* Security: restricted the shortcode endpoint to http/https and hardened admin input handling.
+
+= 3.5.2 =
+* Fixed grid layout structure so posts display in columns.
