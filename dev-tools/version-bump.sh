@@ -35,9 +35,19 @@ sed -i "s/define('REST_POSTS_EMBEDDER_VERSION', '.*'/define('REST_POSTS_EMBEDDER
 [[ -f "$README_TXT" ]] && sed -i "s/^Stable tag: .*/Stable tag: $NEW_VERSION/" "$README_TXT"
 
 if [[ -f "$CHANGELOG" ]]; then
-    ENTRY="## [$NEW_VERSION] - $DATE"
-    [[ -n "$DESCRIPTION" ]] && ENTRY="$ENTRY\n\n- $DESCRIPTION"
-    sed -i "0,/^## \[/{ s/^## \[/$ENTRY\n\n## [/ }" "$CHANGELOG"
+    # Insert before the first "## [" entry using awk so the description can
+    # safely contain any characters (sed's s/// delimiter broke on '/').
+    HEADER="## [$NEW_VERSION] - $DATE"
+    TMPF="$(mktemp)"
+    awk -v hdr="$HEADER" -v desc="$DESCRIPTION" '
+        !inserted && /^## \[/ {
+            print hdr
+            if (desc != "") { print ""; print "- " desc }
+            print ""
+            inserted = 1
+        }
+        { print }
+    ' "$CHANGELOG" > "$TMPF" && mv "$TMPF" "$CHANGELOG"
 fi
 
 echo "Done. Next: git commit, tag v$NEW_VERSION, ./build-zip.sh, ./dev-tools/publish-prowoos.sh"

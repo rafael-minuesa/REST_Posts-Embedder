@@ -5,6 +5,11 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.1] - 2026-06-14
+
+### Fixed
+- **Blurry featured images** - the renderer always used the 300px `medium` size, which the grid upscaled (e.g. shown at ~600px). It now emits a responsive `srcset`/`sizes` built from every available image size and defaults `src` to the largest, so the browser loads a sharp source for the rendered slot.
+
 ## [3.6.0] - 2026-06-14
 
 ### Fixed

@@ -147,22 +147,54 @@ function rest_posts_embedder($atts = array()) {
         $date_format = _x('jS \of F Y', 'embedded post date format', 'restpostsembedder');
         $fordate = isset($remote_post->modified) ? wp_date($date_format, strtotime($remote_post->modified)) : '';
 
-        // Featured image with multiple fallbacks
-        $thumb_url = '';
+        // Featured image. Collect every available size and emit a responsive
+        // srcset so the browser picks a sharp source for the rendered slot. The
+        // old code always used the 300px "medium" size, which the grid upscaled
+        // (e.g. 300px shown at ~600px) and blurred.
+        $thumb_url    = '';
+        $thumb_srcset = '';
         if (!empty($remote_post->featured_media) && isset($remote_post->_embedded->{'wp:featuredmedia'}[0])) {
             $media = $remote_post->_embedded->{'wp:featuredmedia'}[0];
 
-            // Try different image sizes in order of preference
-            if (isset($media->media_details->sizes->medium->source_url)) {
-                $thumb_url = esc_url($media->media_details->sizes->medium->source_url);
-            } elseif (isset($media->media_details->sizes->thumbnail->source_url)) {
-                $thumb_url = esc_url($media->media_details->sizes->thumbnail->source_url);
-            } elseif (isset($media->media_details->sizes->full->source_url)) {
-                $thumb_url = esc_url($media->media_details->sizes->full->source_url);
-            } elseif (isset($media->source_url)) {
+            $candidates = array(); // width (int) => source_url
+            if (isset($media->media_details->sizes)) {
+                foreach ($media->media_details->sizes as $size_name => $size) {
+                    // Skip the square "thumbnail" crop — its aspect ratio differs
+                    // from the others and would distort a width-based srcset.
+                    if ('thumbnail' === $size_name) {
+                        continue;
+                    }
+                    if (!empty($size->source_url) && !empty($size->width)) {
+                        $candidates[(int) $size->width] = $size->source_url;
+                    }
+                }
+            }
+            // Include the original image as the top candidate when its width is known.
+            if (!empty($media->source_url) && !empty($media->media_details->width)) {
+                $candidates[(int) $media->media_details->width] = $media->source_url;
+            }
+
+            if (!empty($candidates)) {
+                ksort($candidates);
+                // Default src = largest available (sharp fallback for browsers
+                // that ignore srcset).
+                $thumb_url = esc_url(end($candidates));
+
+                $srcset_parts = array();
+                foreach ($candidates as $w => $url) {
+                    $srcset_parts[] = esc_url($url) . ' ' . $w . 'w';
+                }
+                if (count($srcset_parts) > 1) {
+                    $thumb_srcset = implode(', ', $srcset_parts);
+                }
+            } elseif (!empty($media->source_url)) {
                 $thumb_url = esc_url($media->source_url);
             }
         }
+
+        // sizes hint: ~full width on mobile, otherwise one column of the grid.
+        $columns_desktop = max(1, absint(get_option('embed_posts_columns_desktop', 2)));
+        $thumb_sizes = '(max-width: 768px) 100vw, ' . round(100 / $columns_desktop) . 'vw';
 
         // Author information
         $author_name = __('Unknown Author', 'restpostsembedder');
@@ -197,7 +229,7 @@ function rest_posts_embedder($atts = array()) {
                             $author_html) .
                         '</small>
                         <div class="embed-post-content">
-                            ' . ($thumb_url ? '<a href="' . $link . '" target="_blank" rel="noopener noreferrer"><img src="' . $thumb_url . '" alt="' . esc_attr($title) . '" loading="lazy" /></a>' : '') . '
+                            ' . ($thumb_url ? '<a href="' . $link . '" target="_blank" rel="noopener noreferrer"><img src="' . $thumb_url . '"' . ($thumb_srcset ? ' srcset="' . $thumb_srcset . '" sizes="' . esc_attr($thumb_sizes) . '"' : '') . ' alt="' . esc_attr($title) . '" loading="lazy" /></a>' : '') . '
                             ' . $excerpt . '
                             <a href="' . $link . '" target="_blank" rel="noopener noreferrer" class="read-more">
                                 <b>' . __('Read more...', 'restpostsembedder') . '</b>
