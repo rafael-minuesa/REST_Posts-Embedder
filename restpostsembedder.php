@@ -160,9 +160,10 @@ require plugin_dir_path( __FILE__ ) . 'shortcodes/functions.php';
 // Register shortcode
 add_shortcode( 'posts_embedder', 'RestPostsEmbedder\\Shortcodes\\rest_posts_embedder' );
 
-// Self-hosted update checker (admin only). Polls a prowoos.com JSON manifest so
-// new releases show up in wp-admin like any other plugin update.
-if ( is_admin() ) {
+// Self-hosted update checker. Polls a prowoos.com JSON manifest so new releases
+// show up in wp-admin like any other plugin update. Also load it under WP-CLI so
+// `wp plugin update` (and cron-based fleet updaters) pick the release up too.
+if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
     require plugin_dir_path( __FILE__ ) . 'includes/class-update-checker.php';
     new \REST_Posts_Embedder_Update_Checker( plugin_basename( __FILE__ ) );
 }

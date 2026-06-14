@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Blurry featured images** - the renderer always used the 300px `medium` size, which the grid upscaled (e.g. shown at ~600px). It now emits a responsive `srcset`/`sizes` built from every available image size and defaults `src` to the largest, so the browser loads a sharp source for the rendered slot.
+- **Updater now loads under WP-CLI** (`is_admin() || WP_CLI`), so `wp plugin update` and cron-based fleet updaters pick up new releases (previously the checker only ran in wp-admin).
 
 ## [3.6.0] - 2026-06-14
 
