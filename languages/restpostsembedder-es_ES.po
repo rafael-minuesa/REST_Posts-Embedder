@@ -1,0 +1,60 @@
+# Spanish (Spain) translation for REST Posts Embedder.
+msgid ""
+msgstr ""
+"Project-Id-Version: REST Posts Embedder 3.6.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-14 00:00+0000\n"
+"PO-Revision-Date: 2026-06-14 00:00+0000\n"
+"Last-Translator: Rafael Minuesa\n"
+"Language-Team: Spanish (Spain)\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Front-end byline date format. English drops to a plain Spanish date.
+# msgid runtime:  jS \of F Y   ->  "8th of June 2026"
+# msgstr runtime: j \d\e F Y   ->  "8 de junio 2026"
+msgctxt "embedded post date format"
+msgid "jS \\of F Y"
+msgstr "j \\d\\e F Y"
+
+msgid "%1$s, by %2$s"
+msgstr "%1$s, por %2$s"
+
+msgid "Unknown Author"
+msgstr "Autor desconocido"
+
+msgid "Untitled"
+msgstr "Sin título"
+
+msgid "Read more..."
+msgstr "Leer más..."
+
+msgid "Settings"
+msgstr "Ajustes"
+
+msgid "Default Source"
+msgstr "Fuente predeterminada"
+
+msgid "Invalid endpoint URL."
+msgstr "URL del endpoint no válida."
+
+msgid "No posts found."
+msgstr "No se han encontrado entradas."
+
+msgid "Unable to parse response from API. Invalid JSON received."
+msgstr "No se ha podido procesar la respuesta de la API. JSON no válido."
+
+msgid "Unable to fetch posts. Error: %s. Please check your endpoint URL in the plugin settings."
+msgstr "No se han podido obtener las entradas. Error: %s. Comprueba la URL del endpoint en los ajustes del plugin."
+
+msgid "Unable to fetch posts. Server returned HTTP error %d. Please verify the endpoint URL is correct."
+msgstr "No se han podido obtener las entradas. El servidor devolvió el error HTTP %d. Verifica que la URL del endpoint sea correcta."
+
+msgid "The requested feed source \"%s\" is currently disabled."
+msgstr "La fuente solicitada «%s» está desactivada actualmente."
+
+msgid "Feed source \"%s\" not found. Please check your source ID in the plugin settings."
+msgstr "No se ha encontrado la fuente «%s». Comprueba el ID de la fuente en los ajustes del plugin."

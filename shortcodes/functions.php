@@ -50,8 +50,13 @@ function rest_posts_embedder($atts = array()) {
         }
     }
 
-    // Validate inputs
-    $endpoint = esc_url_raw($atts['endpoint']);
+    // Validate inputs. Restrict to http/https to limit the SSRF surface from a
+    // shortcode-supplied endpoint, and reject URLs WordPress considers unsafe
+    // (blocked hosts / internal addresses, per WP's own HTTP request rules).
+    $endpoint = esc_url_raw($atts['endpoint'], array('http', 'https'));
+    if (!empty($endpoint) && !wp_http_validate_url($endpoint)) {
+        $endpoint = '';
+    }
     $count = absint($atts['count']);
     $count = ($count > 0 && $count <= REST_POSTS_EMBEDDER_MAX_COUNT) ? $count : REST_POSTS_EMBEDDER_DEFAULT_COUNT;
 
@@ -92,7 +97,9 @@ function rest_posts_embedder($atts = array()) {
         'timeout' => 10,
         'sslverify' => true
     );
-    $response = wp_remote_get(add_query_arg(array('per_page' => $count), $endpoint), $args);
+    // Force _embed so author and featured media are returned inside _embedded,
+    // regardless of whether the configured endpoint already includes ?_embed.
+    $response = wp_remote_get(add_query_arg(array('per_page' => $count, '_embed' => 1), $endpoint), $args);
 
     // Error handling
     if (is_wp_error($response)) {
@@ -135,7 +142,10 @@ function rest_posts_embedder($atts = array()) {
         // Safely extract post data
         $title = isset($remote_post->title->rendered) ? esc_html($remote_post->title->rendered) : __('Untitled', 'restpostsembedder');
         $link = isset($remote_post->link) ? esc_url($remote_post->link) : '';
-        $fordate = isset($remote_post->modified) ? wp_date('jS \of F Y', strtotime($remote_post->modified)) : '';
+        // Translatable date format so locales can drop the English ordinal/"of".
+        // English: "8th of June 2026"; Spanish (es_ES catalog): "8 de junio 2026".
+        $date_format = _x('jS \of F Y', 'embedded post date format', 'restpostsembedder');
+        $fordate = isset($remote_post->modified) ? wp_date($date_format, strtotime($remote_post->modified)) : '';
 
         // Featured image with multiple fallbacks
         $thumb_url = '';
@@ -158,12 +168,24 @@ function rest_posts_embedder($atts = array()) {
         $author_name = __('Unknown Author', 'restpostsembedder');
         $author_name_url = '';
         if (!empty($remote_post->author) && isset($remote_post->_embedded->author[0])) {
-            $author_name = esc_html($remote_post->_embedded->author[0]->name);
-            $author_name_url = esc_url($remote_post->_embedded->author[0]->source_url);
+            $author = $remote_post->_embedded->author[0];
+            if (!empty($author->name)) {
+                $author_name = esc_html($author->name);
+            }
+            // Author archive URL lives in ->link; ->source_url only exists on media
+            // objects (that, plus the missing _embed, caused the empty author link).
+            if (!empty($author->link)) {
+                $author_name_url = esc_url($author->link);
+            }
         }
 
         // Excerpt
         $excerpt = isset($remote_post->excerpt->rendered) ? wp_kses_post($remote_post->excerpt->rendered) : '';
+
+        // Link the author name only when an archive URL is available.
+        $author_html = $author_name_url
+            ? '<a href="' . $author_name_url . '" target="_blank" rel="noopener noreferrer">' . $author_name . '</a>'
+            : $author_name;
 
         // Build individual post HTML (article only, no wrappers)
         $post_html = '<article class="embed-posts">
@@ -172,7 +194,7 @@ function rest_posts_embedder($atts = array()) {
                         </a>
                         <small>' . sprintf(__('%1$s, by %2$s', 'restpostsembedder'),
                             $fordate,
-                            '<a href="' . $author_name_url . '" target="_blank" rel="noopener noreferrer">' . $author_name . '</a>') .
+                            $author_html) .
                         '</small>
                         <div class="embed-post-content">
                             ' . ($thumb_url ? '<a href="' . $link . '" target="_blank" rel="noopener noreferrer"><img src="' . $thumb_url . '" alt="' . esc_attr($title) . '" loading="lazy" /></a>' : '') . '
