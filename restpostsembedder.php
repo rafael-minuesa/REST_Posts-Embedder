@@ -5,7 +5,7 @@
  * Plugin URI:  https://github.com/rafael-minuesa/REST_Posts-Embedder
  * Author:      Rafael Minuesa
  * Author URI:  https://www.linkedin.com/in/rafaelminuesa/
- * Version:     3.6.0
+ * Version:     3.6.1
  * Text Domain: restpostsembedder
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Define plugin constants
 if (!defined('REST_POSTS_EMBEDDER_VERSION')) {
-    define('REST_POSTS_EMBEDDER_VERSION', '3.6.0');
+    define('REST_POSTS_EMBEDDER_VERSION', '3.6.1');
 }
 if (!defined('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT')) {
     define('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT', 'https://prowoos.com/wp-json/wp/v2/posts?_embed');
@@ -160,9 +160,10 @@ require plugin_dir_path( __FILE__ ) . 'shortcodes/functions.php';
 // Register shortcode
 add_shortcode( 'posts_embedder', 'RestPostsEmbedder\\Shortcodes\\rest_posts_embedder' );
 
-// Self-hosted update checker (admin only). Polls a prowoos.com JSON manifest so
-// new releases show up in wp-admin like any other plugin update.
-if ( is_admin() ) {
+// Self-hosted update checker. Polls a prowoos.com JSON manifest so new releases
+// show up in wp-admin like any other plugin update. Also load it under WP-CLI so
+// `wp plugin update` (and cron-based fleet updaters) pick the release up too.
+if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
     require plugin_dir_path( __FILE__ ) . 'includes/class-update-checker.php';
     new \REST_Posts_Embedder_Update_Checker( plugin_basename( __FILE__ ) );
 }
