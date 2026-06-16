@@ -5,6 +5,19 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.7.0] - 2026-06-16
+
+### Added
+- **"Load More" button** at the bottom of each feed. When the source has more posts than fit in one batch, a button (localised to "Cargar más" in Spanish) loads the next page of posts via AJAX and appends them to the grid, without reloading the page. The button disappears automatically when the last page is reached.
+- **Per-feed excerpt length**, measured in characters. Each feed source has its own *Excerpt Length* field; a global *Default Excerpt Length* on the Styling tab applies to feeds that don't set their own. Excerpts are truncated on a word boundary with an ellipsis using core `wp_html_excerpt()`. Default: 200 characters; `0` shows the full excerpt from the source. Can also be overridden inline with `[posts_embedder excerpt_length="150"]`.
+
+### Changed
+- The source *Number of Posts* setting is now the **batch size** (posts loaded per page / per "Load More" click) rather than a hard total.
+- Each fetched page is cached separately, so repeated "Load More" clicks don't re-hit the remote site within the cache window.
+
+### Security
+- The "Load More" AJAX endpoint never receives the remote URL from the browser: the button carries an opaque server-issued token that maps back to the feed's endpoint/count/excerpt via a transient, preserving the existing SSRF protections.
+
 ## [3.6.1] - 2026-06-14
 
 ### Fixed

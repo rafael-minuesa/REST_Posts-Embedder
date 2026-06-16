@@ -1,7 +1,7 @@
 # Spanish (Spain) translation for REST Posts Embedder.
 msgid ""
 msgstr ""
-"Project-Id-Version: REST Posts Embedder 3.6.0\n"
+"Project-Id-Version: REST Posts Embedder 3.7.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-14 00:00+0000\n"
 "PO-Revision-Date: 2026-06-14 00:00+0000\n"
@@ -58,3 +58,47 @@ msgstr "La fuente solicitada «%s» está desactivada actualmente."
 
 msgid "Feed source \"%s\" not found. Please check your source ID in the plugin settings."
 msgstr "No se ha encontrado la fuente «%s». Comprueba el ID de la fuente en los ajustes del plugin."
+
+# --- 3.7.0: Load More button ---
+msgid "Load More"
+msgstr "Cargar más"
+
+msgid "Loading…"
+msgstr "Cargando…"
+
+msgid "Could not load more posts. Please try again."
+msgstr "No se han podido cargar más entradas. Inténtalo de nuevo."
+
+msgid "This feed has expired. Please refresh the page."
+msgstr "Esta fuente ha caducado. Actualiza la página."
+
+msgid "Invalid request."
+msgstr "Solicitud no válida."
+
+# --- 3.7.0: per-feed excerpt length ---
+msgid "Excerpt Length"
+msgstr "Longitud del extracto"
+
+msgid "Default Excerpt Length"
+msgstr "Longitud de extracto predeterminada"
+
+msgid "Excerpt"
+msgstr "Extracto"
+
+msgid "characters"
+msgstr "caracteres"
+
+msgid "%d chars"
+msgstr "%d caracteres"
+
+msgid "Full"
+msgstr "Completo"
+
+msgid "Number of posts to load per batch (%d-%d). Each \"Load More\" click loads another batch."
+msgstr "Número de entradas a cargar por lote (%d-%d). Cada clic en «Cargar más» carga otro lote."
+
+msgid "Maximum excerpt length for this feed, in characters (0-%d). Use 0 to show the full excerpt from the source. Default: %d."
+msgstr "Longitud máxima del extracto para esta fuente, en caracteres (0-%d). Usa 0 para mostrar el extracto completo de la fuente. Predeterminado: %d."
+
+msgid "Default maximum excerpt length, in characters (0-%1$d). Use 0 to show the full excerpt from the source. Default: %2$d. Each feed source can override this."
+msgstr "Longitud máxima del extracto predeterminada, en caracteres (0-%1$d). Usa 0 para mostrar el extracto completo de la fuente. Predeterminado: %2$d. Cada fuente puede sobrescribirla."

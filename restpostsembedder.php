@@ -5,7 +5,7 @@
  * Plugin URI:  https://github.com/rafael-minuesa/REST_Posts-Embedder
  * Author:      Rafael Minuesa
  * Author URI:  https://www.linkedin.com/in/rafaelminuesa/
- * Version:     3.6.1
+ * Version:     3.7.0
  * Text Domain: restpostsembedder
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Define plugin constants
 if (!defined('REST_POSTS_EMBEDDER_VERSION')) {
-    define('REST_POSTS_EMBEDDER_VERSION', '3.6.1');
+    define('REST_POSTS_EMBEDDER_VERSION', '3.7.0');
 }
 if (!defined('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT')) {
     define('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT', 'https://prowoos.com/wp-json/wp/v2/posts?_embed');
@@ -39,6 +39,15 @@ if (!defined('REST_POSTS_EMBEDDER_MAX_COUNT')) {
 }
 if (!defined('REST_POSTS_EMBEDDER_CACHE_EXPIRATION')) {
     define('REST_POSTS_EMBEDDER_CACHE_EXPIRATION', HOUR_IN_SECONDS);
+}
+// Excerpt length is measured in characters. 0 means "no truncation" (use the
+// full excerpt returned by the remote site). The default is a reasonable card
+// length and can be overridden globally or per feed source.
+if (!defined('REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH')) {
+    define('REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH', 200);
+}
+if (!defined('REST_POSTS_EMBEDDER_MAX_EXCERPT_LENGTH')) {
+    define('REST_POSTS_EMBEDDER_MAX_EXCERPT_LENGTH', 2000);
 }
 
 /**
@@ -76,6 +85,7 @@ function rest_posts_embedder_activate() {
                     'name' => __('Default Source', 'restpostsembedder'),
                     'endpoint' => $old_endpoint,
                     'count' => $old_count,
+                    'excerpt_length' => REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH,
                     'enabled' => true
                 )
             );
@@ -87,6 +97,7 @@ function rest_posts_embedder_activate() {
                     'name' => __('Default Source', 'restpostsembedder'),
                     'endpoint' => REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT,
                     'count' => REST_POSTS_EMBEDDER_DEFAULT_COUNT,
+                    'excerpt_length' => REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH,
                     'enabled' => true
                 )
             );
@@ -159,6 +170,12 @@ require plugin_dir_path( __FILE__ ) . 'shortcodes/functions.php';
 
 // Register shortcode
 add_shortcode( 'posts_embedder', 'RestPostsEmbedder\\Shortcodes\\rest_posts_embedder' );
+
+// AJAX handler for the "Load More" button (front-end, available to logged-out
+// visitors too). It fetches the next page of posts using a server-issued token
+// so an arbitrary endpoint URL can never be supplied by the client.
+add_action( 'wp_ajax_rest_posts_embedder_load_more', 'RestPostsEmbedder\\Shortcodes\\rest_posts_embedder_load_more' );
+add_action( 'wp_ajax_nopriv_rest_posts_embedder_load_more', 'RestPostsEmbedder\\Shortcodes\\rest_posts_embedder_load_more' );
 
 // Self-hosted update checker. Polls a prowoos.com JSON manifest so new releases
 // show up in wp-admin like any other plugin update. Also load it under WP-CLI so

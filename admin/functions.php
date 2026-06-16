@@ -67,6 +67,9 @@ function handle_source_actions() {
         $source_name = isset($_POST['source_name']) ? sanitize_text_field(wp_unslash($_POST['source_name'])) : '';
         $source_endpoint = isset($_POST['source_endpoint']) ? esc_url_raw(wp_unslash($_POST['source_endpoint']), array('http', 'https')) : '';
         $source_count = isset($_POST['source_count']) ? absint(wp_unslash($_POST['source_count'])) : REST_POSTS_EMBEDDER_DEFAULT_COUNT;
+        $source_excerpt_length = isset($_POST['source_excerpt_length'])
+            ? \RestPostsEmbedder\Shortcodes\sanitize_excerpt_length(wp_unslash($_POST['source_excerpt_length']))
+            : REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH;
         $source_enabled = isset($_POST['source_enabled']) ? true : false;
 
         // Validate
@@ -90,6 +93,7 @@ function handle_source_actions() {
             'name' => $source_name,
             'endpoint' => $source_endpoint,
             'count' => $source_count,
+            'excerpt_length' => $source_excerpt_length,
             'enabled' => $source_enabled
         );
 
@@ -243,6 +247,7 @@ function render_sources_list() {
                         <th><?php esc_html_e('Source ID', 'restpostsembedder'); ?></th>
                         <th><?php esc_html_e('Endpoint', 'restpostsembedder'); ?></th>
                         <th><?php esc_html_e('Post Count', 'restpostsembedder'); ?></th>
+                        <th><?php esc_html_e('Excerpt', 'restpostsembedder'); ?></th>
                         <th><?php esc_html_e('Status', 'restpostsembedder'); ?></th>
                         <th><?php esc_html_e('Actions', 'restpostsembedder'); ?></th>
                     </tr>
@@ -254,6 +259,14 @@ function render_sources_list() {
                             <td><code><?php echo esc_html($source['id']); ?></code></td>
                             <td><?php echo esc_html(strlen($source['endpoint']) > 50 ? substr($source['endpoint'], 0, 50) . '...' : $source['endpoint']); ?></td>
                             <td><?php echo esc_html($source['count']); ?></td>
+                            <td>
+                                <?php
+                                $src_excerpt = isset($source['excerpt_length']) ? (int) $source['excerpt_length'] : (int) get_option('embed_posts_excerpt_length', REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH);
+                                echo $src_excerpt > 0
+                                    ? esc_html(sprintf(__('%d chars', 'restpostsembedder'), $src_excerpt))
+                                    : esc_html__('Full', 'restpostsembedder');
+                                ?>
+                            </td>
                             <td>
                                 <?php if ($source['enabled']) : ?>
                                     <span style="color: green;">●</span> <?php esc_html_e('Enabled', 'restpostsembedder'); ?>
@@ -298,8 +311,15 @@ function render_source_form($source_id) {
         'name' => '',
         'endpoint' => '',
         'count' => REST_POSTS_EMBEDDER_DEFAULT_COUNT,
+        'excerpt_length' => (int) get_option('embed_posts_excerpt_length', REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH),
         'enabled' => true
     ) : (isset($sources[$source_id]) ? $sources[$source_id] : null);
+
+    // Sources saved before per-feed excerpts existed have no excerpt_length;
+    // fall back to the global default for the form.
+    if (is_array($source) && !isset($source['excerpt_length'])) {
+        $source['excerpt_length'] = (int) get_option('embed_posts_excerpt_length', REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH);
+    }
 
     if (!$source && !$is_new) {
         echo '<p>' . esc_html__('Source not found.', 'restpostsembedder') . '</p>';
@@ -350,9 +370,29 @@ function render_source_form($source_id) {
                                class="small-text">
                         <p class="description">
                             <?php printf(
-                                esc_html__('Default number of posts to display (%d-%d).', 'restpostsembedder'),
+                                esc_html__('Number of posts to load per batch (%d-%d). Each "Load More" click loads another batch.', 'restpostsembedder'),
                                 REST_POSTS_EMBEDDER_MIN_COUNT,
                                 REST_POSTS_EMBEDDER_MAX_COUNT
+                            ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="source_excerpt_length"><?php esc_html_e('Excerpt Length', 'restpostsembedder'); ?></label>
+                    </th>
+                    <td>
+                        <input type="number" id="source_excerpt_length" name="source_excerpt_length" value="<?php echo esc_attr($source['excerpt_length']); ?>"
+                               min="0"
+                               max="<?php echo (int) REST_POSTS_EMBEDDER_MAX_EXCERPT_LENGTH; ?>"
+                               step="10"
+                               class="small-text">
+                        <?php esc_html_e('characters', 'restpostsembedder'); ?>
+                        <p class="description">
+                            <?php printf(
+                                esc_html__('Maximum excerpt length for this feed, in characters (0-%d). Use 0 to show the full excerpt from the source. Default: %d.', 'restpostsembedder'),
+                                (int) REST_POSTS_EMBEDDER_MAX_EXCERPT_LENGTH,
+                                (int) REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH
                             ); ?>
                         </p>
                     </td>
@@ -426,6 +466,29 @@ function render_styling_settings() {
                                 esc_html__('Default number of posts to display (%d-%d). Can be overridden in shortcode.', 'restpostsembedder'),
                                 REST_POSTS_EMBEDDER_MIN_COUNT,
                                 REST_POSTS_EMBEDDER_MAX_COUNT
+                            ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row">
+                        <label for="embed_posts_excerpt_length"><?php esc_html_e('Default Excerpt Length', 'restpostsembedder'); ?></label>
+                    </th>
+                    <td>
+                        <input type="number"
+                               id="embed_posts_excerpt_length"
+                               name="embed_posts_excerpt_length"
+                               value="<?php echo esc_attr(get_option('embed_posts_excerpt_length', REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH)); ?>"
+                               min="0"
+                               max="<?php echo (int) REST_POSTS_EMBEDDER_MAX_EXCERPT_LENGTH; ?>"
+                               step="10"
+                               class="small-text"
+                        /> <?php esc_html_e('characters', 'restpostsembedder'); ?>
+                        <p class="description">
+                            <?php printf(
+                                esc_html__('Default maximum excerpt length, in characters (0-%1$d). Use 0 to show the full excerpt from the source. Default: %2$d. Each feed source can override this.', 'restpostsembedder'),
+                                (int) REST_POSTS_EMBEDDER_MAX_EXCERPT_LENGTH,
+                                (int) REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH
                             ); ?>
                         </p>
                     </td>
@@ -627,6 +690,12 @@ function embed_posts_styling_init() {
         'type' => 'number',
         'sanitize_callback' => 'RestPostsEmbedder\\Admin\\sanitize_posts_count',
         'default' => REST_POSTS_EMBEDDER_DEFAULT_COUNT
+    ));
+
+    register_setting('embed_posts_styling', 'embed_posts_excerpt_length', array(
+        'type' => 'number',
+        'sanitize_callback' => 'RestPostsEmbedder\\Shortcodes\\sanitize_excerpt_length',
+        'default' => REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH
     ));
 
     register_setting('embed_posts_styling', 'embed_posts_columns_desktop', array(

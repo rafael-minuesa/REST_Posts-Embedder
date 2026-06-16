@@ -1,17 +1,505 @@
-# Translations template for REST Posts Embedder plugin
+# Copyright (C) 2026 Rafael Minuesa
+# This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Version: 1.5\n"
-"POT-Creation-Date: 2024-01-01 00:00+0000\n"
-"PO-Revision-Date: 2024-01-01 00:00+0000\n"
-"Last-Translator: Your Name <your.email@example.com>\n"
-"Language-Team: \n"
+"Project-Id-Version: REST Posts Embedder 3.7.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/restpostsembedder\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-06-16T04:33:26+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: restpostsembedder\n"
 
-#. Front-end byline date format (context). Translators: a PHP date() format
-#. string; localised catalogs may drop the English ordinal, e.g. "j \d\e F Y".
-msgctxt "embedded post date format"
-msgid "jS \of F Y"
+#. Plugin Name of the plugin
+#: restpostsembedder.php
+#: admin/functions.php:20
+msgid "REST Posts Embedder"
 msgstr ""
 
+#. Plugin URI of the plugin
+#: restpostsembedder.php
+msgid "https://github.com/rafael-minuesa/REST_Posts-Embedder"
+msgstr ""
+
+#. Description of the plugin
+#: restpostsembedder.php
+msgid "Embed posts from a specified REST API endpoint with enhanced features."
+msgstr ""
+
+#. Author of the plugin
+#: restpostsembedder.php
+msgid "Rafael Minuesa"
+msgstr ""
+
+#. Author URI of the plugin
+#: restpostsembedder.php
+msgid "https://www.linkedin.com/in/rafaelminuesa/"
+msgstr ""
+
+#: admin/functions.php:19
+msgid "REST Posts Embedder Settings"
+msgstr ""
+
+#: admin/functions.php:54
+msgid "Source deleted successfully!"
+msgstr ""
+
+#: admin/functions.php:80
+msgid "Error: Source name and endpoint are required."
+msgstr ""
+
+#: admin/functions.php:104
+msgid "Source saved successfully!"
+msgstr ""
+
+#: admin/functions.php:137
+#, php-format
+msgid "Cache cleared successfully! %d items removed."
+msgstr ""
+
+#: admin/functions.php:172
+msgid "Feed Sources"
+msgstr ""
+
+#: admin/functions.php:175
+msgid "Styling"
+msgstr ""
+
+#: admin/functions.php:178
+#: admin/functions.php:588
+msgid "Cache Management"
+msgstr ""
+
+#: admin/functions.php:209
+msgid "Manage Feed Sources"
+msgstr ""
+
+#: admin/functions.php:211
+#: admin/functions.php:333
+msgid "Add New Source"
+msgstr ""
+
+#: admin/functions.php:216
+msgid "How to Get Your REST API Endpoint URL"
+msgstr ""
+
+#: admin/functions.php:217
+msgid "To get posts from any WordPress site, use this format:"
+msgstr ""
+
+#: admin/functions.php:218
+msgid "Basic endpoint:"
+msgstr ""
+
+#: admin/functions.php:221
+msgid "Filter by categories:"
+msgstr ""
+
+#: admin/functions.php:223
+msgid "Replace \"111\" with your category ID. To find category IDs, go to Posts → Categories in the WordPress admin."
+msgstr ""
+
+#: admin/functions.php:225
+msgid "Filter by tags:"
+msgstr ""
+
+#: admin/functions.php:227
+msgid "Replace \"222\" with your tag ID. To find tag IDs, go to Posts → Tags in the WordPress admin."
+msgstr ""
+
+#: admin/functions.php:229
+msgid "Combine multiple filters:"
+msgstr ""
+
+#: admin/functions.php:231
+msgid "You can combine categories, tags, and other WordPress REST API parameters."
+msgstr ""
+
+#: admin/functions.php:233
+msgid "Note:"
+msgstr ""
+
+#: admin/functions.php:234
+msgid "The ?_embed parameter includes featured images and author information. Always include it for best results."
+msgstr ""
+
+#: admin/functions.php:237
+msgid "Configure multiple REST API feed sources. Use the source ID in your shortcode to display posts from different sources."
+msgstr ""
+
+#: admin/functions.php:238
+#: admin/functions.php:566
+msgid "Example:"
+msgstr ""
+
+#: admin/functions.php:241
+msgid "No sources configured yet. Click \"Add New Source\" to create your first feed source."
+msgstr ""
+
+#: admin/functions.php:246
+msgid "Name"
+msgstr ""
+
+#: admin/functions.php:247
+msgid "Source ID"
+msgstr ""
+
+#: admin/functions.php:248
+msgid "Endpoint"
+msgstr ""
+
+#: admin/functions.php:249
+msgid "Post Count"
+msgstr ""
+
+#: admin/functions.php:250
+msgid "Excerpt"
+msgstr ""
+
+#: admin/functions.php:251
+#: admin/functions.php:402
+msgid "Status"
+msgstr ""
+
+#: admin/functions.php:252
+msgid "Actions"
+msgstr ""
+
+#: admin/functions.php:266
+#, php-format
+msgid "%d chars"
+msgstr ""
+
+#: admin/functions.php:267
+msgid "Full"
+msgstr ""
+
+#: admin/functions.php:272
+msgid "Enabled"
+msgstr ""
+
+#: admin/functions.php:274
+msgid "Disabled"
+msgstr ""
+
+#: admin/functions.php:279
+msgid "Edit"
+msgstr ""
+
+#: admin/functions.php:285
+msgid "Are you sure you want to delete this source?"
+msgstr ""
+
+#: admin/functions.php:286
+msgid "Delete"
+msgstr ""
+
+#: admin/functions.php:325
+msgid "Source not found."
+msgstr ""
+
+#: admin/functions.php:331
+msgid "Back to Sources"
+msgstr ""
+
+#: admin/functions.php:333
+msgid "Edit Source"
+msgstr ""
+
+#: admin/functions.php:344
+msgid "Source Name"
+msgstr ""
+
+#: admin/functions.php:349
+msgid "A friendly name for this feed source."
+msgstr ""
+
+#: admin/functions.php:354
+msgid "REST API Endpoint"
+msgstr ""
+
+#: admin/functions.php:359
+msgid "Full REST API endpoint URL (e.g., https://example.com/wp-json/wp/v2/posts?_embed)"
+msgstr ""
+
+#: admin/functions.php:364
+#: admin/functions.php:453
+msgid "Number of Posts"
+msgstr ""
+
+#: admin/functions.php:373
+#, php-format
+msgid "Number of posts to load per batch (%d-%d). Each \"Load More\" click loads another batch."
+msgstr ""
+
+#: admin/functions.php:382
+msgid "Excerpt Length"
+msgstr ""
+
+#: admin/functions.php:390
+#: admin/functions.php:486
+msgid "characters"
+msgstr ""
+
+#: admin/functions.php:393
+#, php-format
+msgid "Maximum excerpt length for this feed, in characters (0-%d). Use 0 to show the full excerpt from the source. Default: %d."
+msgstr ""
+
+#: admin/functions.php:408
+msgid "Enable this source"
+msgstr ""
+
+#: admin/functions.php:410
+msgid "Disabled sources cannot be used in shortcodes."
+msgstr ""
+
+#: admin/functions.php:416
+msgid "Shortcode:"
+msgstr ""
+
+#: admin/functions.php:422
+msgid "Add Source"
+msgstr ""
+
+#: admin/functions.php:422
+msgid "Update Source"
+msgstr ""
+
+#: admin/functions.php:425
+msgid "Cancel"
+msgstr ""
+
+#: admin/functions.php:442
+msgid "Styling Settings"
+msgstr ""
+
+#: admin/functions.php:443
+msgid "Configure the display and appearance of embedded posts."
+msgstr ""
+
+#: admin/functions.php:466
+#, php-format
+msgid "Default number of posts to display (%d-%d). Can be overridden in shortcode."
+msgstr ""
+
+#: admin/functions.php:475
+msgid "Default Excerpt Length"
+msgstr ""
+
+#: admin/functions.php:489
+#, php-format
+msgid "Default maximum excerpt length, in characters (0-%1$d). Use 0 to show the full excerpt from the source. Default: %2$d. Each feed source can override this."
+msgstr ""
+
+#: admin/functions.php:498
+msgid "Number of Columns (Desktop)"
+msgstr ""
+
+#: admin/functions.php:510
+msgid "Number of columns to display on desktop (1-5). Default: 2"
+msgstr ""
+
+#: admin/functions.php:516
+msgid "Number of Columns (Mobile)"
+msgstr ""
+
+#: admin/functions.php:528
+msgid "Number of columns to display on mobile devices (1-3). Default: 1"
+msgstr ""
+
+#: admin/functions.php:534
+msgid "Show Featured Images"
+msgstr ""
+
+#: admin/functions.php:540
+msgid "Show on Desktop"
+msgstr ""
+
+#: admin/functions.php:546
+msgid "Show on Mobile"
+msgstr ""
+
+#: admin/functions.php:549
+msgid "Control whether featured images are displayed on different devices."
+msgstr ""
+
+#: admin/functions.php:555
+msgid "Custom CSS"
+msgstr ""
+
+#: admin/functions.php:563
+msgid "Add your custom CSS here. It will be applied to all embedded posts. Do not include <style> tags."
+msgstr ""
+
+#: admin/functions.php:573
+msgid "Save Styling Settings"
+msgstr ""
+
+#: admin/functions.php:590
+msgid "Clear Cache"
+msgstr ""
+
+#: admin/functions.php:591
+msgid "Clear all cached REST API responses. This will force the plugin to fetch fresh data from the API on the next request."
+msgstr ""
+
+#: admin/functions.php:595
+msgid "Clear All Cache Now"
+msgstr ""
+
+#: admin/functions.php:601
+msgid "Cache Expiration Settings"
+msgstr ""
+
+#: admin/functions.php:602
+msgid "Configure how long cached data should be stored before automatically refreshing."
+msgstr ""
+
+#: admin/functions.php:611
+msgid "Cache Expiration"
+msgstr ""
+
+#: admin/functions.php:616
+msgid "1 Hour"
+msgstr ""
+
+#: admin/functions.php:617
+msgid "3 Hours"
+msgstr ""
+
+#: admin/functions.php:618
+msgid "6 Hours"
+msgstr ""
+
+#: admin/functions.php:619
+msgid "12 Hours"
+msgstr ""
+
+#: admin/functions.php:620
+msgid "24 Hours (1 Day)"
+msgstr ""
+
+#: admin/functions.php:621
+msgid "Custom"
+msgstr ""
+
+#: admin/functions.php:624
+msgid "How often the cache should expire and fetch fresh data from the REST API."
+msgstr ""
+
+#: admin/functions.php:630
+msgid "Custom Hours"
+msgstr ""
+
+#: admin/functions.php:640
+msgid "hours"
+msgstr ""
+
+#: admin/functions.php:642
+msgid "Enter a custom number of hours (1-168). Max: 1 week."
+msgstr ""
+
+#: admin/functions.php:655
+msgid "Save Cache Settings"
+msgstr ""
+
+#: admin/functions.php:768
+msgid "Error: Please enter a valid URL for the REST API endpoint."
+msgstr ""
+
+#: admin/functions.php:779
+msgid "Warning: The URL does not appear to be a WordPress REST API endpoint. Make sure it contains \"wp-json\" and returns valid JSON data."
+msgstr ""
+
+#: admin/functions.php:801
+#, php-format
+msgid "Error: Number of posts must be between %d and %d. Value has been reset to default."
+msgstr ""
+
+#: restpostsembedder.php:85
+#: restpostsembedder.php:97
+msgid "Default Source"
+msgstr ""
+
+#: restpostsembedder.php:159
+msgid "Settings"
+msgstr ""
+
+#: shortcodes/functions.php:58
+#, php-format
+msgid "The requested feed source \"%s\" is currently disabled."
+msgstr ""
+
+#: shortcodes/functions.php:72
+#, php-format
+msgid "Feed source \"%s\" not found. Please check your source ID in the plugin settings."
+msgstr ""
+
+#: shortcodes/functions.php:128
+msgid "Invalid endpoint URL."
+msgstr ""
+
+#: shortcodes/functions.php:150
+msgid "No posts found."
+msgstr ""
+
+#: shortcodes/functions.php:222
+#, php-format
+msgid "Unable to fetch posts. Error: %s. Please check your endpoint URL in the plugin settings."
+msgstr ""
+
+#: shortcodes/functions.php:233
+#, php-format
+msgid "Unable to fetch posts. Server returned HTTP error %d. Please verify the endpoint URL is correct."
+msgstr ""
+
+#: shortcodes/functions.php:243
+msgid "Unable to parse response from API. Invalid JSON received."
+msgstr ""
+
+#: shortcodes/functions.php:282
+msgid "Untitled"
+msgstr ""
+
+#: shortcodes/functions.php:286
+msgctxt "embedded post date format"
+msgid "jS \\of F Y"
+msgstr ""
+
+#: shortcodes/functions.php:339
+msgid "Unknown Author"
+msgstr ""
+
+#: shortcodes/functions.php:380
+#, php-format
 msgid "%1$s, by %2$s"
+msgstr ""
+
+#: shortcodes/functions.php:388
+msgid "Read more..."
+msgstr ""
+
+#: shortcodes/functions.php:436
+msgid "Load More"
+msgstr ""
+
+#: shortcodes/functions.php:463
+msgid "Invalid request."
+msgstr ""
+
+#: shortcodes/functions.php:470
+msgid "This feed has expired. Please refresh the page."
+msgstr ""
+
+#: shortcodes/functions.php:525
+msgid "Loading…"
+msgstr ""
+
+#: shortcodes/functions.php:526
+msgid "Could not load more posts. Please try again."
 msgstr ""

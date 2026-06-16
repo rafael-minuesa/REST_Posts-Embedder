@@ -113,6 +113,36 @@ hr.image {
     text-decoration: underline;
 }
 
+/* Load More button */
+.embed-posts-load-more-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5em;
+}
+
+.embed-posts-load-more {
+    display: inline-block;
+    padding: 0.7em 1.8em;
+    font-size: 1em;
+    font-weight: bold;
+    color: #fff;
+    background: #0073a8;
+    border: none;
+    border-radius: 0.4em;
+    cursor: pointer;
+    transition: background 0.3s ease, opacity 0.3s ease;
+}
+
+.embed-posts-load-more:hover {
+    background: #005a87;
+}
+
+.embed-posts-load-more:disabled,
+.embed-posts-load-more.is-loading {
+    opacity: 0.7;
+    cursor: default;
+}
+
 /* Alternative Layout: Inline Image Style */
 .embed-posts-inline {
     width: 100%;
