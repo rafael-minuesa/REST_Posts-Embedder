@@ -440,8 +440,8 @@ function render_single_post($remote_post, $excerpt_length) {
  * Build the Load More button markup and register its token.
  *
  * The token is a hash that the AJAX handler resolves back to the endpoint,
- * count and excerpt length via a transient, so the browser never supplies the
- * remote URL directly.
+ * count and excerpt length, so the browser never supplies the remote URL
+ * directly.
  *
  * @since 3.7.0
  * @param string $endpoint       Validated endpoint URL.
@@ -453,19 +453,20 @@ function render_single_post($remote_post, $excerpt_length) {
 function render_load_more_button($endpoint, $count, $excerpt_length, $total_pages) {
     $token = md5('v2_' . $endpoint . '|' . $count . '|' . $excerpt_length);
 
-    // Persist the token -> context mapping a little longer than the rendered
-    // HTML cache so the button keeps working for as long as the page is served
-    // from cache.
+    // Persist the token -> context mapping as a non-autoloaded option rather
+    // than a transient. Page caches can serve this button for days or weeks,
+    // and a transient (or an object-cache eviction) would break it long before
+    // the cached page is refreshed. The token is deterministic, so each feed
+    // configuration writes its row once.
     $context = array(
         'endpoint'       => $endpoint,
         'count'          => $count,
         'excerpt_length' => $excerpt_length,
     );
-    set_transient(
-        'rpe_lm_' . $token,
-        $context,
-        \RestPostsEmbedder\Admin\get_cache_expiration() + DAY_IN_SECONDS
-    );
+    $option = 'rest_posts_embedder_lm_' . $token;
+    if (get_option($option) !== $context) {
+        update_option($option, $context, false);
+    }
 
     $label = __('Load More', 'restpostsembedder');
 
@@ -486,10 +487,14 @@ function render_load_more_button($endpoint, $count, $excerpt_length, $total_page
  * @return void Outputs a JSON response and exits.
  */
 function rest_posts_embedder_load_more() {
-    check_ajax_referer('rest_posts_embedder_load_more', 'nonce');
-
+    // No nonce check. This is a public, read-only endpoint, and a nonce baked
+    // into page-cached HTML expires within a day and silently breaks the
+    // button. Requests are limited to feeds the server itself rendered, via the
+    // token below.
+    // phpcs:disable WordPress.Security.NonceVerification.Missing
     $token = isset($_POST['token']) ? sanitize_text_field(wp_unslash($_POST['token'])) : '';
     $page  = isset($_POST['page']) ? absint(wp_unslash($_POST['page'])) : 0;
+    // phpcs:enable WordPress.Security.NonceVerification.Missing
 
     // Token is always a 32-char md5 hex string; reject anything else.
     if (!preg_match('/^[a-f0-9]{32}$/', $token) || $page < 2) {
@@ -498,7 +503,16 @@ function rest_posts_embedder_load_more() {
         ));
     }
 
-    $context = get_transient('rpe_lm_' . $token);
+    $option  = 'rest_posts_embedder_lm_' . $token;
+    $context = get_option($option);
+    if (!is_array($context)) {
+        // Buttons rendered by 3.7.0 stored their context in a transient.
+        // Carry it over so pages cached before the update keep working.
+        $context = get_transient('rpe_lm_' . $token);
+        if (is_array($context) && !empty($context['endpoint'])) {
+            update_option($option, $context, false);
+        }
+    }
     if (!is_array($context) || empty($context['endpoint'])) {
         wp_send_json_error(array(
             'message' => __('This feed has expired. Please refresh the page.', 'restpostsembedder'),
@@ -555,7 +569,6 @@ function display_posts_enqueue_styles() {
     wp_enqueue_script( 'rest-posts-embedder-load-more', $js_path, array(), REST_POSTS_EMBEDDER_VERSION, true );
     wp_localize_script( 'rest-posts-embedder-load-more', 'restPostsEmbedderLoadMore', array(
         'ajaxUrl'    => admin_url('admin-ajax.php'),
-        'nonce'      => wp_create_nonce('rest_posts_embedder_load_more'),
         'loadingText' => __('Loading…', 'restpostsembedder'),
         'errorText'   => __('Could not load more posts. Please try again.', 'restpostsembedder'),
     ) );

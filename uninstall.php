@@ -17,3 +17,14 @@ $wpdb->query(
         $wpdb->esc_like('_transient_timeout_rest_posts_embedder_') . '%'
     )
 );
+
+// Remove Load More token contexts (one non-autoloaded option per feed)
+$lm_options = $wpdb->get_col(
+    $wpdb->prepare(
+        "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s",
+        $wpdb->esc_like('rest_posts_embedder_lm_') . '%'
+    )
+);
+foreach ($lm_options as $lm_option) {
+    delete_option($lm_option);
+}
