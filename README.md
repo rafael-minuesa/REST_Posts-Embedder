@@ -8,7 +8,7 @@ Requires WordPress 5.3+ and PHP 7.4+. Tested up to WordPress 7.1.
 
 ## Demo feed
 
-Right after activation the plugin shows a demo feed of posts from [ProWoos](https://prowoos.com/), so you can see how embedded posts look. It is for demonstration only. On pages that show it, administrators see a notice above the posts explaining how to replace it. Visitors never see that notice.
+Right after activation the plugin shows a demo feed of English posts from [ProWoos](https://prowoos.com/), so you can see how embedded posts look. It is for demonstration only. On pages that show it, administrators see a notice above the posts explaining how to replace it. Visitors never see that notice.
 
 ## Show your own posts
 

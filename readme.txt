@@ -26,7 +26,7 @@ REST Posts Embedder displays posts from any WordPress site as a responsive grid 
 
 = Demo feed =
 
-Right after activation the plugin shows a demo feed of posts from [ProWoos](https://prowoos.com/), so you can see how embedded posts look. The demo feed is for demonstration only. On pages that show it, administrators see a notice above the posts explaining how to replace it. Visitors never see that notice.
+Right after activation the plugin shows a demo feed of English posts from [ProWoos](https://prowoos.com/), so you can see how embedded posts look. The demo feed is for demonstration only. On pages that show it, administrators see a notice above the posts explaining how to replace it. Visitors never see that notice.
 
 = Show your own posts =
 

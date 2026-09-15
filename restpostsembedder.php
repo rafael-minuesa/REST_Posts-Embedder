@@ -27,10 +27,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 if (!defined('REST_POSTS_EMBEDDER_VERSION')) {
     define('REST_POSTS_EMBEDDER_VERSION', '3.7.0');
 }
-// Demo feed of ProWoos posts, used until the site configures its own source.
-// Administrators see a notice above it on the front end.
+// Demo feed of English ProWoos posts (prowoos.com filters by language with
+// ?lang=), used until the site configures its own source. Administrators see
+// a notice above it on the front end.
 if (!defined('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT')) {
-    define('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT', 'https://prowoos.com/wp-json/wp/v2/posts?_embed');
+    define('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT', 'https://prowoos.com/wp-json/wp/v2/posts?lang=en&_embed');
+}
+// Demo endpoint used before the feed was limited to English. Still stored in
+// the options of existing installs; recognized as the demo and upgraded to
+// REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT when rendered.
+if (!defined('REST_POSTS_EMBEDDER_LEGACY_DEMO_ENDPOINT')) {
+    define('REST_POSTS_EMBEDDER_LEGACY_DEMO_ENDPOINT', 'https://prowoos.com/wp-json/wp/v2/posts?_embed');
 }
 if (!defined('REST_POSTS_EMBEDDER_DEFAULT_COUNT')) {
     define('REST_POSTS_EMBEDDER_DEFAULT_COUNT', 5);
