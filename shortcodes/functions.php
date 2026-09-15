@@ -66,8 +66,9 @@ function truncate_excerpt($html, $length) {
 /**
  * Whether an endpoint is the bundled ProWoos demo feed.
  *
- * Compares against REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT, ignoring the _embed
- * parameter, which every request forces anyway.
+ * Matches the current demo endpoint and the legacy one (all languages) that
+ * existing installs still have stored, ignoring the _embed parameter, which
+ * every request forces anyway.
  *
  * @param mixed $endpoint Endpoint URL.
  * @return bool
@@ -79,7 +80,11 @@ function is_demo_endpoint($endpoint) {
     $normalize = function ($url) {
         return untrailingslashit(strtolower(remove_query_arg('_embed', $url)));
     };
-    return $normalize($endpoint) === $normalize(REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT);
+    $demo_endpoints = array_map($normalize, array(
+        REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT,
+        REST_POSTS_EMBEDDER_LEGACY_DEMO_ENDPOINT,
+    ));
+    return in_array($normalize($endpoint), $demo_endpoints, true);
 }
 
 /**
@@ -167,6 +172,11 @@ function rest_posts_embedder($atts = array()) {
     $endpoint = esc_url_raw($atts['endpoint'], array('http', 'https'));
     if (!empty($endpoint) && !wp_http_validate_url($endpoint)) {
         $endpoint = '';
+    }
+    // Feeds still stored with the legacy demo endpoint (all languages) get the
+    // current demo endpoint (English only).
+    if (is_demo_endpoint($endpoint)) {
+        $endpoint = REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT;
     }
     $count = absint($atts['count']);
     $count = ($count > 0 && $count <= REST_POSTS_EMBEDDER_MAX_COUNT) ? $count : REST_POSTS_EMBEDDER_DEFAULT_COUNT;
