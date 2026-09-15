@@ -7,6 +7,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 // Remove plugin-specific options
 delete_option('embed_posts_endpoint');
 delete_option('embed_posts_count');
+delete_option('rest_posts_embedder_cache_generation');
 
 // Remove all plugin transients
 global $wpdb;

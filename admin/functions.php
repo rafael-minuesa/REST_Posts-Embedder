@@ -122,8 +122,16 @@ function handle_cache_clear() {
         return;
     }
 
+    // Start a new cache generation. Every cache key includes it, so all
+    // previously cached feeds are bypassed at once. This is what actually
+    // clears the cache on sites with a persistent object cache (Redis,
+    // Memcached), where transients never reach the options table.
+    update_option('rest_posts_embedder_cache_generation', uniqid('', true));
+
+    // Without a persistent object cache the old transients sit in the options
+    // table until they expire, so remove them now as well.
     global $wpdb;
-    $deleted = $wpdb->query(
+    $wpdb->query(
         $wpdb->prepare(
             "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
             $wpdb->esc_like('_transient_rest_posts_embedder_') . '%',
@@ -134,7 +142,7 @@ function handle_cache_clear() {
     add_settings_error(
         'rest_posts_embedder_messages',
         'cache_cleared',
-        sprintf(__('Cache cleared successfully! %d items removed.', 'restpostsembedder'), $deleted),
+        __('Cache cleared successfully!', 'restpostsembedder'),
         'success'
     );
 }
@@ -882,6 +890,19 @@ function sanitize_columns_mobile($value) {
         return 1; // Default
     }
     return $columns;
+}
+
+/**
+ * Get the current cache generation.
+ *
+ * Included in every feed cache key. Clearing the cache starts a new
+ * generation instead of deleting entries by name, which a persistent object
+ * cache does not allow.
+ *
+ * @return string Cache generation identifier ('0' until the cache is first cleared).
+ */
+function get_cache_generation() {
+    return (string) get_option('rest_posts_embedder_cache_generation', '0');
 }
 
 /**
