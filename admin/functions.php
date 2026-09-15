@@ -899,6 +899,7 @@ function sanitize_columns_mobile($value) {
  * generation instead of deleting entries by name, which a persistent object
  * cache does not allow.
  *
+ * @since 3.8.0
  * @return string Cache generation identifier ('0' until the cache is first cleared).
  */
 function get_cache_generation() {

@@ -70,6 +70,7 @@ function truncate_excerpt($html, $length) {
  * existing installs still have stored, ignoring the _embed parameter, which
  * every request forces anyway.
  *
+ * @since 3.8.0
  * @param mixed $endpoint Endpoint URL.
  * @return bool
  */
@@ -93,6 +94,7 @@ function is_demo_endpoint($endpoint) {
  * Returned separately from the feed HTML so it never ends up in the cache,
  * which is shared by every visitor.
  *
+ * @since 3.8.0
  * @return string Notice HTML, or an empty string for everyone else.
  */
 function render_demo_notice() {

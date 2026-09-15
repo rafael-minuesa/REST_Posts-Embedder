@@ -5,6 +5,30 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.8.0] - 2026-09-15
+
+### Added
+- **Demo feed notice.** Feeds that use the bundled ProWoos demo endpoint show administrators a notice above the posts, saying it is a demo and linking to the settings page. The notice is kept out of the cached HTML, so visitors never see it.
+- The Feed Sources tab explains the demo feed and the steps to show your own posts, marks demo sources with a "Demo" badge, and flags the demo endpoint on the edit form. New installs name the demo source "ProWoos Demo Feed".
+- CSS custom properties `--rpe-card-background`, `--rpe-card-shadow`, `--rpe-card-border-color` and `--rpe-grid-gap`, overridable on `.embed-posts-container`.
+- Spanish translations for the new strings.
+
+### Changed
+- The demo feed shows English posts only (`?lang=en`). Feeds still stored with the previous all-language demo URL use the English one automatically.
+- The Load More token context is stored in a non-autoloaded option (`rest_posts_embedder_lm_<token>`) instead of a transient. Contexts from 3.7.0 transients are carried over on first use.
+- "Clear All Cache Now" starts a new cache generation that is part of every cache key. The notice no longer reports a row count.
+- Requires at least WordPress 5.3 (was 5.0; `wp_date()` needs 5.3) and PHP 7.4 (was 7.2). Tested up to 7.1.
+- `readme.txt` and `README.md` rewritten: demo feed, how to show your own posts, shortcode attributes, corrected FAQ.
+- `dev-tools/publish-prowoos.sh` reads the manifest's `tested`, `requires` and `requires_php` from `readme.txt`.
+
+### Fixed
+- **Plugin CSS restyled the host theme.** Unprefixed `hr` and `.wrapper` rules, loaded on every front-end page, changed theme elements. They are removed, and the generic `:root` variables are replaced by the prefixed ones above.
+- **Load More stopped working on page-cached pages.** The nonce in cached HTML expired within 24 hours and the token transient after the cache time plus one day. The public, read-only endpoint no longer uses a nonce, and the token context no longer expires.
+- **"Clear All Cache Now" did nothing with a persistent object cache** (Redis, Memcached), where transients are not stored in `wp_options`.
+
+### Security
+- Feeds are fetched with `wp_safe_remote_get()`, so every redirect is validated. An allowed endpoint that redirected to an internal address was previously fetched and rendered.
+
 ## [3.7.0] - 2026-06-16
 
 ### Added

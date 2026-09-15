@@ -4,7 +4,7 @@ Donate link: https://prowoos.com/
 Tags: rest api, embed posts, posts grid, shortcode, load more
 Requires at least: 5.3
 Tested up to: 7.1
-Stable tag: 3.7.0
+Stable tag: 3.8.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,16 @@ Set "Number of Posts" on the feed source. Each "Load More" click loads another b
 Feeds are cached for one hour by default. Change the duration, or clear the cache, under Settings → REST Posts Embedder → Cache Management.
 
 == Changelog ==
+
+= 3.8.0 =
+* Security: feeds are fetched with wp_safe_remote_get(), so redirects to internal addresses are blocked.
+* Fixed plugin CSS restyling theme elements (hr and .wrapper) on every page.
+* Fixed "Load More" stopping on page-cached pages after a day.
+* Fixed "Clear All Cache Now" doing nothing on sites with a persistent object cache (Redis, Memcached).
+* The demo feed now shows English posts from ProWoos, and administrators see a notice above it explaining how to show their own posts.
+* The Feed Sources tab explains the demo feed and marks demo sources with a "Demo" badge.
+* New CSS custom properties for card colors and grid gap.
+* Requires WordPress 5.3 and PHP 7.4. Tested up to WordPress 7.1.
 
 = 3.7.0 =
 * Added a "Load More" button (localized "Cargar más") at the bottom of each feed; it loads the next page of posts via AJAX and appends them without a page reload.

@@ -1,7 +1,7 @@
 # Spanish (Spain) translation for REST Posts Embedder.
 msgid ""
 msgstr ""
-"Project-Id-Version: REST Posts Embedder 3.7.0\n"
+"Project-Id-Version: REST Posts Embedder 3.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-14 00:00+0000\n"
 "PO-Revision-Date: 2026-09-15 00:00+0000\n"

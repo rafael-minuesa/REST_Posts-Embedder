@@ -5,7 +5,7 @@
  * Plugin URI:  https://github.com/rafael-minuesa/REST_Posts-Embedder
  * Author:      Rafael Minuesa
  * Author URI:  https://www.linkedin.com/in/rafaelminuesa/
- * Version:     3.7.0
+ * Version:     3.8.0
  * Requires at least: 5.3
  * Requires PHP: 7.4
  * Text Domain: restpostsembedder
@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Define plugin constants
 if (!defined('REST_POSTS_EMBEDDER_VERSION')) {
-    define('REST_POSTS_EMBEDDER_VERSION', '3.7.0');
+    define('REST_POSTS_EMBEDDER_VERSION', '3.8.0');
 }
 // Demo feed of English ProWoos posts (prowoos.com filters by language with
 // ?lang=), used until the site configures its own source. Administrators see
