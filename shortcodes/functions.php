@@ -303,7 +303,10 @@ function fetch_posts_page($endpoint, $count, $page) {
         $endpoint
     );
 
-    $response = wp_remote_get($url, $args);
+    // wp_safe_remote_get() validates the URL and every redirect it follows
+    // with wp_http_validate_url(). Checking only the configured endpoint is
+    // not enough: an allowed URL can redirect to an internal address.
+    $response = wp_safe_remote_get($url, $args);
 
     if (is_wp_error($response)) {
         $error_message = $response->get_error_message();
