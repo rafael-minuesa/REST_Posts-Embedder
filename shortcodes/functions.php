@@ -166,9 +166,10 @@ function rest_posts_embedder($atts = array()) {
     }
 
     // Create a unique cache key. Includes excerpt length so changing it busts
-    // the cache, and a schema version so older cached HTML (without the Load
-    // More button) is not served.
-    $cache_key = 'rest_posts_embedder_' . md5('v2_' . $endpoint . '_' . $count . '_' . $excerpt_length);
+    // the cache, a schema version so older cached HTML (without the Load More
+    // button) is not served, and the cache generation so "Clear All Cache Now"
+    // invalidates it on any cache backend.
+    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length);
 
     // Try to get cached posts
     $cached_posts = get_transient($cache_key);
@@ -512,7 +513,7 @@ function rest_posts_embedder_load_more() {
     $excerpt_length = isset($context['excerpt_length']) ? sanitize_excerpt_length($context['excerpt_length']) : 0;
 
     // Cache each rendered page so repeated clicks don't re-hit the remote.
-    $page_cache_key = 'rest_posts_embedder_p_' . md5('v2_' . $endpoint . '|' . $count . '|' . $excerpt_length . '|' . $page);
+    $page_cache_key = 'rest_posts_embedder_p_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '|' . $endpoint . '|' . $count . '|' . $excerpt_length . '|' . $page);
     $cached = get_transient($page_cache_key);
     if (false !== $cached) {
         wp_send_json_success($cached);
