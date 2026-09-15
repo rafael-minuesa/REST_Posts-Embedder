@@ -23,6 +23,17 @@ PACKAGE_URL="https://prowoos.com/wp-content/uploads/rpe-updates/${PLUGIN_SLUG}-$
 
 [[ ! -f "$ZIP_LOCAL" ]] && { echo "Error: $ZIP_LOCAL not found. Run ./build-zip.sh first." >&2; exit 1; }
 
+# Version requirements come from readme.txt so the manifest never drifts from it.
+readme_field() {
+    grep -m1 -oP "^$1:\s*\K\S+" "$PLUGIN_DIR/readme.txt" || true
+}
+TESTED=$(readme_field "Tested up to")
+REQUIRES=$(readme_field "Requires at least")
+REQUIRES_PHP=$(readme_field "Requires PHP")
+for field in TESTED REQUIRES REQUIRES_PHP; do
+    [[ -z "${!field}" ]] && { echo "Error: could not read $field from readme.txt" >&2; exit 1; }
+done
+
 ssh "$SSH_ALIAS" "sudo mkdir -p ${REMOTE_DIR} && sudo chown www-data:www-data ${REMOTE_DIR}"
 
 echo "Uploading ${ZIP_LOCAL}"
@@ -46,9 +57,9 @@ cat > "$MANIFEST_LOCAL" <<JSON
 {
   "version":      "$VERSION",
   "package":      "$PACKAGE_URL",
-  "tested":       "6.9",
-  "requires":     "5.0",
-  "requires_php": "7.4",
+  "tested":       "$TESTED",
+  "requires":     "$REQUIRES",
+  "requires_php": "$REQUIRES_PHP",
   "homepage":     "https://github.com/rafael-minuesa/REST_Posts-Embedder",
   "updated":      "$UPDATED_ISO",
   "changelog":    $CHANGELOG_JSON

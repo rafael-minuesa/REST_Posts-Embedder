@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: REST Posts Embedder 3.7.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-14 00:00+0000\n"
-"PO-Revision-Date: 2026-06-14 00:00+0000\n"
+"PO-Revision-Date: 2026-09-15 00:00+0000\n"
 "Last-Translator: Rafael Minuesa\n"
 "Language-Team: Spanish (Spain)\n"
 "Language: es_ES\n"
@@ -102,3 +102,55 @@ msgstr "Longitud máxima del extracto para esta fuente, en caracteres (0-%d). Us
 
 msgid "Default maximum excerpt length, in characters (0-%1$d). Use 0 to show the full excerpt from the source. Default: %2$d. Each feed source can override this."
 msgstr "Longitud máxima del extracto predeterminada, en caracteres (0-%1$d). Usa 0 para mostrar el extracto completo de la fuente. Predeterminado: %2$d. Cada fuente puede sobrescribirla."
+
+# --- Demo feed ---
+msgid "ProWoos Demo Feed"
+msgstr "Feed de demostración de ProWoos"
+
+msgid "Demo feed."
+msgstr "Feed de demostración."
+
+msgid "These sample posts come from ProWoos and are shown for demonstration only."
+msgstr "Estas entradas de ejemplo proceden de ProWoos y se muestran solo como demostración."
+
+msgid "Settings → REST Posts Embedder"
+msgstr "Ajustes → REST Posts Embedder"
+
+#. translators: %s: link to the plugin settings page.
+msgid "To show your own posts, add a feed source in %s and use the shortcode shown for it."
+msgstr "Para mostrar tus propias entradas, añade una fuente en %s y usa el shortcode que aparece para ella."
+
+msgid "Only administrators see this notice."
+msgstr "Solo los administradores ven este aviso."
+
+msgid "About the Demo Feed"
+msgstr "Acerca del feed de demostración"
+
+msgid "The plugin comes with a demo feed of posts from ProWoos, so you can see how embedded posts look right after activation. It is for demonstration only. Sources that use it are marked \"Demo\" below."
+msgstr "El plugin incluye un feed de demostración con entradas de ProWoos, para que veas cómo quedan las entradas incrustadas nada más activarlo. Es solo una demostración. Las fuentes que lo usan aparecen marcadas como «Demo» más abajo."
+
+msgid "To show your own posts:"
+msgstr "Para mostrar tus propias entradas:"
+
+msgid "Add New Source"
+msgstr "Añadir nueva fuente"
+
+msgid "Click \"Add New Source\", or edit the demo source."
+msgstr "Haz clic en «Añadir nueva fuente» o edita la fuente de demostración."
+
+msgid "Enter the REST API endpoint of the site whose posts you want to show (see the examples on this page) and save."
+msgstr "Introduce el endpoint de la API REST del sitio cuyas entradas quieres mostrar (consulta los ejemplos de esta página) y guarda."
+
+#. translators: %s: example shortcode.
+msgid "Place the shortcode shown for that source on any page, for example %s."
+msgstr "Coloca en cualquier página el shortcode que aparece para esa fuente, por ejemplo %s."
+
+#. translators: %s: the shortcode without attributes.
+msgid "The shortcode without a source, %s, always shows the demo feed."
+msgstr "El shortcode sin fuente, %s, siempre muestra el feed de demostración."
+
+msgid "Demo"
+msgstr "Demo"
+
+msgid "This is the ProWoos demo feed. Replace it with the endpoint of the site whose posts you want to show."
+msgstr "Este es el feed de demostración de ProWoos. Sustitúyelo por el endpoint del sitio cuyas entradas quieres mostrar."

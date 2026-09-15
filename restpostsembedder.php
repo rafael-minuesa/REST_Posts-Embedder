@@ -6,6 +6,8 @@
  * Author:      Rafael Minuesa
  * Author URI:  https://www.linkedin.com/in/rafaelminuesa/
  * Version:     3.7.0
+ * Requires at least: 5.3
+ * Requires PHP: 7.4
  * Text Domain: restpostsembedder
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
@@ -25,6 +27,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 if (!defined('REST_POSTS_EMBEDDER_VERSION')) {
     define('REST_POSTS_EMBEDDER_VERSION', '3.7.0');
 }
+// Demo feed of ProWoos posts, used until the site configures its own source.
+// Administrators see a notice above it on the front end.
 if (!defined('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT')) {
     define('REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT', 'https://prowoos.com/wp-json/wp/v2/posts?_embed');
 }
@@ -90,11 +94,11 @@ function rest_posts_embedder_activate() {
                 )
             );
         } else {
-            // Create default source
+            // Create the demo source
             $sources = array(
                 'default' => array(
                     'id' => 'default',
-                    'name' => __('Default Source', 'restpostsembedder'),
+                    'name' => __('ProWoos Demo Feed', 'restpostsembedder'),
                     'endpoint' => REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT,
                     'count' => REST_POSTS_EMBEDDER_DEFAULT_COUNT,
                     'excerpt_length' => REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH,

@@ -162,3 +162,32 @@ hr.image {
         margin-right: 0;
     }
 }
+
+/* Demo feed notice (shown to administrators only) */
+.embed-posts-demo-notice {
+    margin: 0 0 1em;
+    padding: 0.75em 1em;
+    border-left: 4px solid #dba617;
+    background: #fcf9e8;
+    color: #1d2327;
+    font-size: 0.95em;
+    line-height: 1.5;
+}
+
+.embed-posts-demo-notice p {
+    margin: 0 0 0.4em;
+}
+
+.embed-posts-demo-notice p:last-child {
+    margin-bottom: 0;
+}
+
+.embed-posts-demo-notice a {
+    color: #2271b1;
+    text-decoration: underline;
+}
+
+.embed-posts-demo-notice .embed-posts-demo-notice-meta {
+    font-size: 0.9em;
+    opacity: 0.75;
+}
