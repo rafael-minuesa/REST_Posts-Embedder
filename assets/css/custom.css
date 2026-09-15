@@ -1,27 +1,12 @@
-/* Embed Posts Grid */
-:root {
-    --primary-shadow: 0 5px 10px rgba(0, 0, 0, 0.1), 0 20px 20px rgba(0, 0, 0, 0.05);
-    --primary-border-color: rgba(0, 0, 0, 0.1);
-    --primary-background: #fff;
-    --grid-gap: 1em;
-}
+/* Embed Posts Grid
+ *
+ * Every selector is scoped to the plugin's own classes so nothing here can
+ * restyle the host theme. Colors and spacing read prefixed custom properties
+ * with built-in defaults; override them on .embed-posts-container, e.g.
+ * .embed-posts-container { --rpe-card-background: #f7f7f7; }
+ */
 
-/* Dummy content styles (optional) */
-hr { 
-    height: 6px;
-    border: none;
-    background: rgba(0, 0, 0, 0.1);
-} 
-
-hr:last-child {
-    margin-right: 60%;
-}
-
-hr.image {
-    padding-bottom: 50%;
-} 
-
-/* Grid and Wrapper Styles */
+/* Grid Styles */
 .embed-grid {
     padding: 2em;
     width: 100%;
@@ -29,18 +14,9 @@ hr.image {
     margin: 0;
 }
 
-.wrapper {
-    padding: 2em;
-    background: transparent;
-    max-width: 100%;
-    width: 100%;
-    margin: 1em 0;
-}
-
 /* Responsive Design */
 @media only screen and (max-width: 768px) {
-    .embed-grid,
-    .wrapper {
+    .embed-grid {
         width: 100%;
         padding: 1em;
         margin: 1em 0;
@@ -51,16 +27,16 @@ hr.image {
 .embed-posts-wrapper {
     display: grid;
     /* Column configuration is set dynamically via inline CSS */
-    grid-gap: var(--grid-gap);
+    grid-gap: var(--rpe-grid-gap, 1em);
 }
 
 /* Individual Post Styles */
 .embed-posts {
     padding: 1em;
-    background: var(--primary-background);
-    box-shadow: var(--primary-shadow);
+    background: var(--rpe-card-background, #fff);
+    box-shadow: var(--rpe-card-shadow, 0 5px 10px rgba(0, 0, 0, 0.1), 0 20px 20px rgba(0, 0, 0, 0.05));
     border-radius: 0.5em;
-    border: solid 1px var(--primary-border-color);
+    border: solid 1px var(--rpe-card-border-color, rgba(0, 0, 0, 0.1));
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
