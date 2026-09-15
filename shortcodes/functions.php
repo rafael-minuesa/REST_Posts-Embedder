@@ -64,6 +64,55 @@ function truncate_excerpt($html, $length) {
 }
 
 /**
+ * Whether an endpoint is the bundled ProWoos demo feed.
+ *
+ * Compares against REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT, ignoring the _embed
+ * parameter, which every request forces anyway.
+ *
+ * @param mixed $endpoint Endpoint URL.
+ * @return bool
+ */
+function is_demo_endpoint($endpoint) {
+    if (!is_string($endpoint) || '' === $endpoint) {
+        return false;
+    }
+    $normalize = function ($url) {
+        return untrailingslashit(strtolower(remove_query_arg('_embed', $url)));
+    };
+    return $normalize($endpoint) === $normalize(REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT);
+}
+
+/**
+ * Notice shown above the demo feed, to administrators only.
+ *
+ * Returned separately from the feed HTML so it never ends up in the cache,
+ * which is shared by every visitor.
+ *
+ * @return string Notice HTML, or an empty string for everyone else.
+ */
+function render_demo_notice() {
+    if (!current_user_can('manage_options')) {
+        return '';
+    }
+
+    $settings_link = '<a href="' . esc_url(admin_url('options-general.php?page=embed-posts-settings')) . '">'
+        . esc_html__('Settings → REST Posts Embedder', 'restpostsembedder')
+        . '</a>';
+
+    return '<div class="embed-posts-demo-notice" role="note">'
+        . '<p><strong>' . esc_html__('Demo feed.', 'restpostsembedder') . '</strong> '
+        . esc_html__('These sample posts come from ProWoos and are shown for demonstration only.', 'restpostsembedder')
+        . '</p>'
+        . '<p>' . sprintf(
+            /* translators: %s: link to the plugin settings page. */
+            esc_html__('To show your own posts, add a feed source in %s and use the shortcode shown for it.', 'restpostsembedder'),
+            $settings_link
+        ) . '</p>'
+        . '<p class="embed-posts-demo-notice-meta">' . esc_html__('Only administrators see this notice.', 'restpostsembedder') . '</p>'
+        . '</div>';
+}
+
+/**
  * Main shortcode handler for displaying REST API posts.
  *
  * @since 1.0.0
@@ -165,6 +214,10 @@ function rest_posts_embedder($atts = array()) {
         return '<p>' . __('Invalid endpoint URL.', 'restpostsembedder') . '</p>';
     }
 
+    // Administrators get a notice above the demo feed. Prepended to every
+    // return below, never cached.
+    $demo_notice = is_demo_endpoint($endpoint) ? render_demo_notice() : '';
+
     // Create a unique cache key. Includes excerpt length so changing it busts
     // the cache, and a schema version so older cached HTML (without the Load
     // More button) is not served.
@@ -173,18 +226,18 @@ function rest_posts_embedder($atts = array()) {
     // Try to get cached posts
     $cached_posts = get_transient($cache_key);
     if (false !== $cached_posts) {
-        return $cached_posts;
+        return $demo_notice . $cached_posts;
     }
 
     // Fetch the first page.
     $fetch = fetch_posts_page($endpoint, $count, 1);
     if (!empty($fetch['error'])) {
-        return '<p>' . $fetch['error'] . '</p>';
+        return $demo_notice . '<p>' . $fetch['error'] . '</p>';
     }
 
     $remote_posts = $fetch['posts'];
     if (empty($remote_posts) || !is_array($remote_posts)) {
-        return '<p>' . __('No posts found.', 'restpostsembedder') . '</p>';
+        return $demo_notice . '<p>' . __('No posts found.', 'restpostsembedder') . '</p>';
     }
 
     // Render the grid.
@@ -215,7 +268,7 @@ function rest_posts_embedder($atts = array()) {
     $cache_expiration = \RestPostsEmbedder\Admin\get_cache_expiration();
     set_transient($cache_key, $allposts, $cache_expiration);
 
-    return $allposts;
+    return $demo_notice . $allposts;
 }
 
 /**

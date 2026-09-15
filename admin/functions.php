@@ -204,6 +204,15 @@ function embed_posts_settings_page_html() {
  */
 function render_sources_list() {
     $sources = get_option('rest_posts_embedder_sources', array());
+
+    // Explain the demo feed while any part of the site still uses it.
+    $bare_shortcode_is_demo = \RestPostsEmbedder\Shortcodes\is_demo_endpoint(get_option('embed_posts_endpoint'));
+    $demo_in_use = $bare_shortcode_is_demo;
+    foreach ($sources as $source) {
+        if (\RestPostsEmbedder\Shortcodes\is_demo_endpoint($source['endpoint'])) {
+            $demo_in_use = true;
+        }
+    }
     ?>
     <div class="wrap">
         <h2><?php esc_html_e('Manage Feed Sources', 'restpostsembedder'); ?>
@@ -211,6 +220,34 @@ function render_sources_list() {
                 <?php esc_html_e('Add New Source', 'restpostsembedder'); ?>
             </a>
         </h2>
+
+        <?php if ($demo_in_use) : ?>
+            <div class="notice notice-warning inline" style="padding: 5px 15px;">
+                <h3><?php esc_html_e('About the Demo Feed', 'restpostsembedder'); ?></h3>
+                <p><?php esc_html_e('The plugin comes with a demo feed of posts from ProWoos, so you can see how embedded posts look right after activation. It is for demonstration only. Sources that use it are marked "Demo" below.', 'restpostsembedder'); ?></p>
+                <p><strong><?php esc_html_e('To show your own posts:', 'restpostsembedder'); ?></strong></p>
+                <ol>
+                    <li><?php esc_html_e('Click "Add New Source", or edit the demo source.', 'restpostsembedder'); ?></li>
+                    <li><?php esc_html_e('Enter the REST API endpoint of the site whose posts you want to show (see the examples on this page) and save.', 'restpostsembedder'); ?></li>
+                    <li><?php
+                        printf(
+                            /* translators: %s: example shortcode. */
+                            esc_html__('Place the shortcode shown for that source on any page, for example %s.', 'restpostsembedder'),
+                            '<code>[posts_embedder source="your-source-id"]</code>'
+                        );
+                    ?></li>
+                </ol>
+                <?php if ($bare_shortcode_is_demo) : ?>
+                    <p><?php
+                        printf(
+                            /* translators: %s: the shortcode without attributes. */
+                            esc_html__('The shortcode without a source, %s, always shows the demo feed.', 'restpostsembedder'),
+                            '<code>[posts_embedder]</code>'
+                        );
+                    ?></p>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
 
         <div class="notice notice-info" style="padding: 15px;">
             <h3><?php esc_html_e('How to Get Your REST API Endpoint URL', 'restpostsembedder'); ?></h3>
@@ -255,7 +292,12 @@ function render_sources_list() {
                 <tbody>
                     <?php foreach ($sources as $source) : ?>
                         <tr>
-                            <td><strong><?php echo esc_html($source['name']); ?></strong></td>
+                            <td>
+                                <strong><?php echo esc_html($source['name']); ?></strong>
+                                <?php if (\RestPostsEmbedder\Shortcodes\is_demo_endpoint($source['endpoint'])) : ?>
+                                    <span style="display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 3px; background: #dba617; color: #1d2327; font-size: 11px; line-height: 18px; font-weight: 600;"><?php esc_html_e('Demo', 'restpostsembedder'); ?></span>
+                                <?php endif; ?>
+                            </td>
                             <td><code><?php echo esc_html($source['id']); ?></code></td>
                             <td><?php echo esc_html(strlen($source['endpoint']) > 50 ? substr($source['endpoint'], 0, 50) . '...' : $source['endpoint']); ?></td>
                             <td><?php echo esc_html($source['count']); ?></td>
@@ -357,6 +399,9 @@ function render_source_form($source_id) {
                         <input type="url" id="source_endpoint" name="source_endpoint" value="<?php echo esc_attr($source['endpoint']); ?>"
                                class="large-text" required>
                         <p class="description"><?php esc_html_e('Full REST API endpoint URL (e.g., https://example.com/wp-json/wp/v2/posts?_embed)', 'restpostsembedder'); ?></p>
+                        <?php if (!$is_new && \RestPostsEmbedder\Shortcodes\is_demo_endpoint($source['endpoint'])) : ?>
+                            <p class="description"><strong><?php esc_html_e('This is the ProWoos demo feed. Replace it with the endpoint of the site whose posts you want to show.', 'restpostsembedder'); ?></strong></p>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <tr>
