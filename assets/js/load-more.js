@@ -40,7 +40,6 @@
 
 		var body = new URLSearchParams();
 		body.append( 'action', 'rest_posts_embedder_load_more' );
-		body.append( 'nonce', settings.nonce || '' );
 		body.append( 'token', token );
 		body.append( 'page', String( nextPage ) );
 
