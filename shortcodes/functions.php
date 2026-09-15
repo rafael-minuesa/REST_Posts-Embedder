@@ -637,15 +637,6 @@ function display_posts_enqueue_styles() {
     $show_images_mobile = absint(get_option('embed_posts_show_images_mobile', 1));
 
     $inline_css = "
-    /* Fix wrapper layout */
-    .wrapper {
-        width: 100%;
-        max-width: 100%;
-        float: none;
-        padding: 0;
-        margin: 0;
-    }
-
     /* Column configuration for desktop */
     .embed-posts-wrapper {
         grid-template-columns: repeat({$columns_desktop}, 1fr);
