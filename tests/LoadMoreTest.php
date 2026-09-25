@@ -17,6 +17,12 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
 
     public function set_up() {
         parent::set_up();
+        // _handleAjax() fires admin_init. The parent class removes these update
+        // checks once per class, but the saved hooks restore them after each test
+        // when another test class ran first.
+        remove_action('admin_init', '_maybe_update_core');
+        remove_action('admin_init', '_maybe_update_plugins');
+        remove_action('admin_init', '_maybe_update_themes');
         $this->requests = array();
         $this->total_pages = 3;
         $this->failure = null;
