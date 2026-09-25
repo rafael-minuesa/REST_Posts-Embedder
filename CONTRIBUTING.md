@@ -17,7 +17,8 @@
 The suite loads the plugin in the real WordPress PHPUnit framework. HTTP responses
 are intercepted with `pre_http_request`; tests never contact remote feeds, and use
 a public IP fixture to avoid DNS lookups during URL validation. Coverage includes
-shortcode attributes, remote HTML/URL escaping, and endpoint/response failures.
+shortcode attributes, remote HTML/URL escaping, endpoint/response failures,
+and the Load More button and its AJAX handler.
 
 Requirements: PHP 7.4+, Composer, the mysqli, mbstring, DOM and XML extensions,
 MySQL or MariaDB, Bash, curl and tar. Use a **disposable database**: WordPress's test
