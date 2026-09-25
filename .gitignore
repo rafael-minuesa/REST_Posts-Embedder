@@ -54,6 +54,8 @@ wp-config.php
 
 # Ignore composer dependencies
 /vendor/
+/.phpunit.result.cache
+/phpunit.xml
 
 # Ignore npm dependencies
 /node_modules/
