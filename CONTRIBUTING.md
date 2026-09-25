@@ -44,7 +44,7 @@ Pass `latest` instead of `6.8` to download the current stable WordPress release.
 An existing matching WordPress development checkout can also be used directly.
 
 Run a subset with `composer test -- --filter test_invalid_endpoint`.
-GitHub Actions runs on pushes and pull requests with PHP 7.4 / WordPress 6.8 and
+GitHub Actions runs on pushes to `main` and on pull requests with PHP 7.4 / WordPress 6.8 and
 PHP 8.3 and 8.4 / latest WordPress. Each job uses an isolated MySQL service.
 This is a focused compatibility matrix, not a claim that every supported
 WordPress/PHP combination is tested.

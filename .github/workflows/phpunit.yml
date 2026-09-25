@@ -2,6 +2,7 @@ name: PHPUnit
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -47,6 +48,14 @@ jobs:
           extensions: mysqli, mbstring, dom, xml
           tools: composer:v2
           coverage: none
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-php${{ matrix.php }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-php${{ matrix.php }}-
       - run: composer install --no-interaction --prefer-dist
       - run: composer validate --strict
       - name: Install WordPress test framework
