@@ -44,12 +44,15 @@ To show a single category or tag, add it to the endpoint, for example `https://e
 * `endpoint` is a REST API endpoint URL, for use without a source.
 * `count` is the number of posts per batch (1 to 20). Each "Load More" click loads another batch.
 * `excerpt_length` is the excerpt length in characters. `0` shows the full excerpt. The default is 200.
+* `excerpt_words` is the excerpt length in words (1 to 200). It wins over `excerpt_length`.
 * `layout` is the card layout, `classic` or `grid`. Without it the source's layout is used, then the one set on the Styling tab.
 * `columns` is the number of columns on desktops (1 to 5). The default is the Styling setting.
 * `columns_tablet` is the number of columns on tablets (1 to 5), for layouts with a tablet step such as Grid. The default is the smaller of `columns` and 2.
 * `category`, `tag`, `orderby`, `order` and `offset` filter and sort a `source="this-site"` feed: category or tag slugs (comma-separated), `date`, `modified`, `title` or `comment_count`, `DESC` or `ASC`, and the number of posts to skip.
 
 `[posts_embedder source="this-site"]` shows this site's own published posts, with the same layouts and Load More button. It is not cached, so a new post shows at once.
+
+`[prowoos_posts_grid]`, the shortcode of the merged ProWoos Posts Grid plugin, keeps working as a "This site" feed in the Grid layout.
 
 When `source` is set, the source's endpoint and post count are used and the `endpoint` and `count` attributes are ignored. `excerpt_length` and `layout` still override the source settings.
 

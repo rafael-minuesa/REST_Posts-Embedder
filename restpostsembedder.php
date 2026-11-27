@@ -200,6 +200,7 @@ require plugin_dir_path( __FILE__ ) . 'admin/functions.php';
 require plugin_dir_path( __FILE__ ) . 'shortcodes/layouts.php';
 require plugin_dir_path( __FILE__ ) . 'shortcodes/functions.php';
 require plugin_dir_path( __FILE__ ) . 'shortcodes/local.php';
+require plugin_dir_path( __FILE__ ) . 'shortcodes/posts-grid-alias.php';
 
 // Register shortcode
 add_shortcode( 'posts_embedder', 'RestPostsEmbedder\\Shortcodes\\rest_posts_embedder' );

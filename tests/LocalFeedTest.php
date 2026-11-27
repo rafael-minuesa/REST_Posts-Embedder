@@ -152,16 +152,23 @@ class LocalFeedTest extends WP_Ajax_UnitTestCase {
         // Same tab: no target attribute anywhere.
         $this->assertStringNotContainsString('target=', $html);
         $this->assertStringContainsString('<a href="' . esc_url($link) . '">', $html);
-        // Publication date in the site's timezone.
-        $this->assertStringContainsString('19th of March 2026, by <a href="' . esc_url(get_author_posts_url(get_post_field('post_author', $this->posts[1]))) . '">Ana López</a>', $html);
+        // Publication date in the site's timezone and date format.
+        update_option('date_format', 'j. F Y');
+        $html = do_shortcode('[posts_embedder source="this-site" count="1" excerpt_length="30"]');
+        $this->assertStringContainsString('19. March 2026, by <a href="' . esc_url(get_author_posts_url(get_post_field('post_author', $this->posts[1]))) . '">Ana López</a>', $html);
         $this->assertStringContainsString('<p>Content of post 1. Alpha beta…</p>', $html);
     }
 
     public function test_grid_card_gets_iso_date_and_manual_excerpt() {
         wp_update_post(array('ID' => $this->posts[1], 'post_excerpt' => 'Hand-written <em>summary</em>.'));
         $html = do_shortcode('[posts_embedder source="this-site" count="1" layout="grid" excerpt_length="0"]');
-        $this->assertStringContainsString('<time class="embed-posts-card-date" datetime="2026-03-19T11:30:00+01:00">19th of March 2026</time>', $html);
+        $this->assertStringContainsString('<time class="embed-posts-card-date" datetime="2026-03-19T11:30:00+01:00">March 19, 2026</time>', $html);
         $this->assertStringContainsString('<div class="embed-posts-card-excerpt"><p>Hand-written <em>summary</em>.</p>', $html);
+    }
+
+    public function test_excerpt_in_words() {
+        $html = do_shortcode('[posts_embedder source="this-site" count="1" excerpt_words="4" excerpt_length="500"]');
+        $this->assertStringContainsString('<p>Content of post 1.…</p>', $html);
     }
 
     public function test_title_is_escaped() {

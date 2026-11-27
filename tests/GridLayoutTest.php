@@ -126,6 +126,34 @@ class GridLayoutTest extends WP_UnitTestCase {
         );
     }
 
+    /** @dataProvider word_counts */
+    public function test_excerpt_in_words_wins_over_characters($attributes, $excerpt) {
+        $html = do_shortcode('[posts_embedder layout="grid" ' . $attributes . ']');
+        $this->assertStringContainsString('<div class="embed-posts-card-excerpt">' . $excerpt . '</div>', $html);
+    }
+
+    public static function word_counts() {
+        return array(
+            'words' => array('excerpt_words="3"', '<p>Alpha beta gamma…</p>'),
+            'words over characters' => array('excerpt_words="3" excerpt_length="10"', '<p>Alpha beta gamma…</p>'),
+            'more words than the excerpt has' => array('excerpt_words="50"', '<p>Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu.</p>'),
+            'zero words means characters' => array('excerpt_words="0" excerpt_length="12"', '<p>Alpha beta…</p>'),
+            'capped at 200' => array('excerpt_words="9999"', '<p>Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu.</p>'),
+        );
+    }
+
+    public function test_excerpt_in_words_is_cached_separately_and_kept_by_load_more() {
+        $chars = do_shortcode('[posts_embedder layout="grid"]');
+        $words = do_shortcode('[posts_embedder layout="grid" excerpt_words="2"]');
+        $this->assertNotSame($chars, $words);
+        $this->assertSame(2, $this->requests);
+        $this->assertSame(1, preg_match('/data-token="([^"]*)"/', $words, $match));
+        $this->assertSame(2, get_option('rest_posts_embedder_lm_' . $match[1])['excerpt_words']);
+        // A feed without words keeps the context of 3.9.0 (no excerpt_words key).
+        $this->assertSame(1, preg_match('/data-token="([^"]*)"/', $chars, $match));
+        $this->assertArrayNotHasKey('excerpt_words', get_option('rest_posts_embedder_lm_' . $match[1]));
+    }
+
     public function test_grid_styles_ship_in_the_stylesheet() {
         $css = file_get_contents(dirname(__DIR__) . '/assets/css/custom.css');
         foreach (array('.embed-posts-layout-grid .embed-posts-wrapper', '.embed-posts-card-image', '.embed-posts-card-date', '.embed-posts-card-readmore', 'aspect-ratio: 16 / 10') as $needle) {
