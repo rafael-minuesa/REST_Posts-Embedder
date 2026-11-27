@@ -26,10 +26,8 @@
     var useSelect = wp.data && wp.data.useSelect;
     var useBlockProps = blockEditor.useBlockProps;
 
-    var TEXT_DOMAIN = 'restpostsembedder';
-
     function sourceOptions() {
-        var options = [{ value: data.localSource, label: __('This site', TEXT_DOMAIN) }];
+        var options = [{ value: data.localSource, label: __('This site', 'restpostsembedder') }];
         data.sources.forEach(function (source) {
             if (source.id !== data.localSource) {
                 options.push({ value: source.id, label: source.name });
@@ -57,42 +55,42 @@
         var attributes = props.attributes;
         var setAttributes = props.setAttributes;
         var categories = useCategories();
-        var categoryOptions = [{ value: '', label: __('All categories', TEXT_DOMAIN) }].concat(
+        var categoryOptions = [{ value: '', label: __('All categories', 'restpostsembedder') }].concat(
             categories.map(function (term) {
                 return { value: term.slug, label: term.name };
             })
         );
 
-        return el(PanelBody, { title: __('Posts from this site', TEXT_DOMAIN), initialOpen: true },
+        return el(PanelBody, { title: __('Posts from this site', 'restpostsembedder'), initialOpen: true },
             el(SelectControl, {
-                label: __('Category', TEXT_DOMAIN),
+                label: __('Category', 'restpostsembedder'),
                 value: attributes.category,
                 options: categoryOptions,
                 onChange: function (value) { setAttributes({ category: value }); }
             }),
             el(SelectControl, {
-                label: __('Order by', TEXT_DOMAIN),
+                label: __('Order by', 'restpostsembedder'),
                 value: attributes.orderby,
                 options: [
-                    { value: 'date', label: __('Publication date', TEXT_DOMAIN) },
-                    { value: 'modified', label: __('Last modified', TEXT_DOMAIN) },
-                    { value: 'title', label: __('Title', TEXT_DOMAIN) },
-                    { value: 'comment_count', label: __('Number of comments', TEXT_DOMAIN) }
+                    { value: 'date', label: __('Publication date', 'restpostsembedder') },
+                    { value: 'modified', label: __('Last modified', 'restpostsembedder') },
+                    { value: 'title', label: __('Title', 'restpostsembedder') },
+                    { value: 'comment_count', label: __('Number of comments', 'restpostsembedder') }
                 ],
                 onChange: function (value) { setAttributes({ orderby: value }); }
             }),
             el(SelectControl, {
-                label: __('Order', TEXT_DOMAIN),
+                label: __('Order', 'restpostsembedder'),
                 value: attributes.order,
                 options: [
-                    { value: 'DESC', label: __('Descending', TEXT_DOMAIN) },
-                    { value: 'ASC', label: __('Ascending', TEXT_DOMAIN) }
+                    { value: 'DESC', label: __('Descending', 'restpostsembedder') },
+                    { value: 'ASC', label: __('Ascending', 'restpostsembedder') }
                 ],
                 onChange: function (value) { setAttributes({ order: value }); }
             }),
             el(RangeControl, {
-                label: __('Skip posts', TEXT_DOMAIN),
-                help: __('Number of posts to leave out at the start.', TEXT_DOMAIN),
+                label: __('Skip posts', 'restpostsembedder'),
+                help: __('Number of posts to leave out at the start.', 'restpostsembedder'),
                 value: attributes.offset,
                 min: 0,
                 max: data.maxOffset,
@@ -107,20 +105,20 @@
         var isLocal = attributes.source === data.localSource;
         var wrapperProps = useBlockProps ? useBlockProps() : { className: props.className };
 
-        var sourcePanel = el(PanelBody, { title: __('Feed', TEXT_DOMAIN), initialOpen: true },
+        var sourcePanel = el(PanelBody, { title: __('Feed', 'restpostsembedder'), initialOpen: true },
             el(SelectControl, {
-                label: __('Source', TEXT_DOMAIN),
+                label: __('Source', 'restpostsembedder'),
                 value: attributes.source,
                 options: sourceOptions(),
                 help: isLocal
-                    ? __('Posts published on this site.', TEXT_DOMAIN)
-                    : __('A feed source set up in the plugin settings. Its number of posts is set there.', TEXT_DOMAIN),
+                    ? __('Posts published on this site.', 'restpostsembedder')
+                    : __('A feed source set up in the plugin settings. Its number of posts is set there.', 'restpostsembedder'),
                 onChange: function (value) { setAttributes({ source: value }); }
             }),
-            data.settingsUrl ? el(ExternalLink, { href: data.settingsUrl }, __('Manage feed sources', TEXT_DOMAIN)) : null,
+            data.settingsUrl ? el(ExternalLink, { href: data.settingsUrl }, __('Manage feed sources', 'restpostsembedder')) : null,
             isLocal ? el(RangeControl, {
-                label: __('Number of posts', TEXT_DOMAIN),
-                help: __('Per batch. "Load More" shows the next batch.', TEXT_DOMAIN),
+                label: __('Number of posts', 'restpostsembedder'),
+                help: __('Per batch. "Load More" shows the next batch.', 'restpostsembedder'),
                 value: attributes.count,
                 min: 1,
                 max: data.maxCount,
@@ -129,16 +127,16 @@
             }) : null
         );
 
-        var displayPanel = el(PanelBody, { title: __('Display', TEXT_DOMAIN), initialOpen: true },
+        var displayPanel = el(PanelBody, { title: __('Display', 'restpostsembedder'), initialOpen: true },
             el(SelectControl, {
-                label: __('Layout', TEXT_DOMAIN),
+                label: __('Layout', 'restpostsembedder'),
                 value: attributes.layout,
                 options: layoutOptions(),
                 onChange: function (value) { setAttributes({ layout: value }); }
             }),
             el(RangeControl, {
-                label: __('Columns', TEXT_DOMAIN),
-                help: __('Empty uses the plugin\'s Styling setting.', TEXT_DOMAIN),
+                label: __('Columns', 'restpostsembedder'),
+                help: __('Empty uses the plugin\'s Styling setting.', 'restpostsembedder'),
                 value: attributes.columns,
                 min: 1,
                 max: data.maxColumns,
@@ -146,7 +144,7 @@
                 onChange: function (value) { setAttributes({ columns: value }); }
             }),
             el(RangeControl, {
-                label: __('Columns on tablets', TEXT_DOMAIN),
+                label: __('Columns on tablets', 'restpostsembedder'),
                 value: attributes.columnsTablet,
                 min: 1,
                 max: data.maxColumns,
@@ -154,19 +152,19 @@
                 onChange: function (value) { setAttributes({ columnsTablet: value }); }
             }),
             el(SelectControl, {
-                label: __('Excerpt length in', TEXT_DOMAIN),
+                label: __('Excerpt length in', 'restpostsembedder'),
                 value: attributes.excerptUnit,
                 options: [
-                    { value: 'words', label: __('Words', TEXT_DOMAIN) },
-                    { value: 'characters', label: __('Characters', TEXT_DOMAIN) }
+                    { value: 'words', label: __('Words', 'restpostsembedder') },
+                    { value: 'characters', label: __('Characters', 'restpostsembedder') }
                 ],
                 onChange: function (value) { setAttributes({ excerptUnit: value }); }
             }),
             el(RangeControl, {
-                label: __('Excerpt length', TEXT_DOMAIN),
+                label: __('Excerpt length', 'restpostsembedder'),
                 help: attributes.excerptUnit === 'characters'
-                    ? __('0 shows the whole excerpt. Empty uses the plugin setting.', TEXT_DOMAIN)
-                    : __('Empty uses the plugin setting.', TEXT_DOMAIN),
+                    ? __('0 shows the whole excerpt. Empty uses the plugin setting.', 'restpostsembedder')
+                    : __('Empty uses the plugin setting.', 'restpostsembedder'),
                 value: attributes.excerptLength,
                 min: attributes.excerptUnit === 'characters' ? 0 : 1,
                 max: attributes.excerptUnit === 'characters' ? 2000 : 200,
@@ -174,7 +172,7 @@
                 onChange: function (value) { setAttributes({ excerptLength: value }); }
             }),
             el(ToggleControl, {
-                label: __('Show "Load More" button', TEXT_DOMAIN),
+                label: __('Show "Load More" button', 'restpostsembedder'),
                 checked: attributes.loadMore !== false,
                 onChange: function (value) { setAttributes({ loadMore: value }); }
             })
@@ -190,11 +188,11 @@
 
     wp.blocks.registerBlockType(data.name, {
         apiVersion: 3,
-        title: __('Posts Grid', TEXT_DOMAIN),
-        description: __('Posts from this site or from another WordPress site, as cards in a grid.', TEXT_DOMAIN),
+        title: __('Posts Grid', 'restpostsembedder'),
+        description: __('Posts from this site or from another WordPress site, as cards in a grid.', 'restpostsembedder'),
         category: 'widgets',
         icon: 'grid-view',
-        keywords: [__('posts', TEXT_DOMAIN), __('blog', TEXT_DOMAIN), __('embed', TEXT_DOMAIN), 'rest'],
+        keywords: [__('posts', 'restpostsembedder'), __('blog', 'restpostsembedder'), __('embed', 'restpostsembedder'), 'rest'],
         supports: { align: ['wide', 'full'], html: false },
         edit: edit,
         save: function () {
