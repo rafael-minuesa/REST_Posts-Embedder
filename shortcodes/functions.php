@@ -525,8 +525,9 @@ function remember_page_bound($endpoint, $count, $total_pages, $ttl) {
  * @return bool
  */
 function is_load_more_context_current($context) {
-    $sources = get_option('rest_posts_embedder_sources', array());
-    $sources = is_array($sources) ? $sources : array();
+    // The same sources the shortcode rendered from, including the defaults of
+    // a site that has none stored (see \RestPostsEmbedder\get_sources()).
+    $sources = \RestPostsEmbedder\get_sources();
 
     if (array_key_exists('source', $context)) {
         if ('' === $context['source']) {
@@ -555,7 +556,7 @@ function is_load_more_context_current($context) {
             return true;
         }
     }
-    return $normalize(get_option('embed_posts_endpoint')) === $endpoint;
+    return $normalize(\RestPostsEmbedder\get_default_endpoint()) === $endpoint;
 }
 
 /**

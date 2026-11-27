@@ -373,6 +373,29 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
         );
     }
 
+    public function test_buttons_work_on_a_site_without_stored_defaults() {
+        // As on a network site the activation hook never ran for: the demo
+        // source exists only as a default. Its hostname would need DNS, so the
+        // feed is sent to the fixture.
+        delete_option('rest_posts_embedder_sources');
+        delete_option('embed_posts_endpoint');
+        add_filter('rest_posts_embedder_endpoint', function ($endpoint) {
+            return REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT === $endpoint ? self::ENDPOINT : $endpoint;
+        });
+
+        $html = do_shortcode('[posts_embedder source="default"]');
+        $this->assertSame(1, preg_match('/data-token="([^"]*)"/', $html, $match), 'Load More button missing.');
+        $this->assertSame('default', get_option('rest_posts_embedder_lm_' . $match[1])['source']);
+        $response = $this->load_more(array('token' => $match[1], 'page' => '2'));
+        $this->assertTrue($response['success'], wp_json_encode($response));
+        $this->assertStringContainsString('<h3>Remote post page 2</h3>', $response['data']['html']);
+
+        // A button from 3.8.0 for the demo feed matches the default endpoint.
+        $this->assertTrue(\RestPostsEmbedder\Shortcodes\is_load_more_context_current(
+            array('endpoint' => REST_POSTS_EMBEDDER_LEGACY_DEMO_ENDPOINT, 'count' => 5, 'excerpt_length' => 200)
+        ));
+    }
+
     /** @dataProvider logged_failures */
     public function test_failed_requests_do_not_log_the_query_string($failure) {
         update_option('embed_posts_endpoint', self::ENDPOINT . '?api_key=SECRET-KEY&signature=SECRET-SIG');
