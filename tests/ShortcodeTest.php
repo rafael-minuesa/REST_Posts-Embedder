@@ -218,6 +218,28 @@ class ShortcodeTest extends WP_UnitTestCase {
         $this->assertSame(0, $this->html_xpath($html)->query('//img')->length);
     }
 
+    /**
+     * Lengths are characters, not bytes. `composer test:no-mbstring` runs the
+     * same cases on WordPress's fallbacks, as on a host without mbstring.
+     *
+     * @dataProvider multibyte_excerpts
+     */
+    public function test_excerpt_is_truncated_by_characters_on_a_word_boundary($excerpt, $length, $expected) {
+        $this->assertSame($expected, \RestPostsEmbedder\Shortcodes\truncate_excerpt($excerpt, $length));
+    }
+
+    public static function multibyte_excerpts() {
+        return array(
+            'accented words' => array('<p>Ñandú café señor más palabras</p>', 12, 'Ñandú café…'),
+            'limit ends on a word' => array('<p>Ñandú café señor</p>', 10, 'Ñandú…'),
+            'no space to back off to' => array('<p>Übergrößenträger</p>', 5, 'Überg…'),
+            'only a leading word fits' => array('<p>añ ñandúes</p>', 5, 'añ…'),
+            'CJK without spaces' => array('<p>東京都は日本の首都です</p>', 4, '東京都は…'),
+            'fits exactly' => array('<p>Ñandú café</p>', 10, 'Ñandú café'),
+            'shorter than the limit' => array('<p>señor</p>', 200, 'señor'),
+        );
+    }
+
     private function html_xpath($html) {
         $document = new DOMDocument();
         $previous = libxml_use_internal_errors(true);

@@ -13,6 +13,7 @@
     },
     "scripts": {
         "test": "phpunit",
-        "test:random": "phpunit --order-by=random"
+        "test:random": "phpunit --order-by=random",
+        "test:no-mbstring": "@php -d disable_functions=mb_strlen,mb_substr,mb_strrpos vendor/bin/phpunit"
     }
 }

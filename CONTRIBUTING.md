@@ -34,7 +34,13 @@ export WP_TESTS_DB_PASSWORD=your_local_test_password
 export WP_TESTS_DB_HOST=127.0.0.1:3306
 composer test
 composer test:random
+composer test:no-mbstring
 ```
+
+`composer test:no-mbstring` runs the suite with `mb_strlen()`, `mb_substr()` and
+`mb_strrpos()` disabled, so WordPress's own fallbacks are used, as on a host
+without the mbstring extension. It needs PHP 8.0 or later, because older versions
+cannot redefine a disabled function.
 
 The installer downloads WordPress source and its matching test framework into
 `/tmp/rpe-wordpress`. Set `WP_DEVELOP_DIR` to an absolute path to use a different
