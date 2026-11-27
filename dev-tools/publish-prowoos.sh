@@ -4,22 +4,35 @@
 # Prereqs: run build-zip.sh first; SSH alias `prowoos-webdock` configured.
 # Usage: ./dev-tools/publish-prowoos.sh ["Changelog override text"]
 #
+# Releases live in a root-owned directory outside the web root. nginx maps the
+# public URL to it:
+#
+#   location ^~ /wp-content/uploads/rpe-updates/ {
+#       alias /srv/plugin-updates/rpe-updates/;
+#   }
+#
+# The web process (www-data) must never be able to write a release, its
+# directory or any parent directory: installed plugins take the package URL
+# from the manifest, so whoever can replace these files can ship code to every
+# site that updates. Do not move them back under wp-content/uploads, which
+# www-data owns.
+#
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PLUGIN_SLUG="restpostsembedder"
 SSH_ALIAS="prowoos-webdock"
-REMOTE_DIR="/var/www/html/wp-content/uploads/rpe-updates"
+REMOTE_DIR="/srv/plugin-updates/rpe-updates"
+PUBLIC_BASE="https://prowoos.com/wp-content/uploads/rpe-updates"
 MANIFEST_NAME="${PLUGIN_SLUG}.json"
 
 VERSION=$(grep -oP "define\('REST_POSTS_EMBEDDER_VERSION', '\K[0-9]+\.[0-9]+\.[0-9]+" "$PLUGIN_DIR/restpostsembedder.php")
 [[ -z "$VERSION" ]] && { echo "Error: could not read version" >&2; exit 1; }
 
 ZIP_LOCAL="/tmp/${PLUGIN_SLUG}-${VERSION}.zip"
-ZIP_REMOTE="${REMOTE_DIR}/${PLUGIN_SLUG}-${VERSION}.zip"
-MANIFEST_REMOTE="${REMOTE_DIR}/${MANIFEST_NAME}"
-PACKAGE_URL="https://prowoos.com/wp-content/uploads/rpe-updates/${PLUGIN_SLUG}-${VERSION}.zip"
+PACKAGE_URL="${PUBLIC_BASE}/${PLUGIN_SLUG}-${VERSION}.zip"
+MANIFEST_URL="${PUBLIC_BASE}/${MANIFEST_NAME}"
 
 [[ ! -f "$ZIP_LOCAL" ]] && { echo "Error: $ZIP_LOCAL not found. Run ./build-zip.sh first." >&2; exit 1; }
 
@@ -34,11 +47,48 @@ for field in TESTED REQUIRES REQUIRES_PHP; do
     [[ -z "${!field}" ]] && { echo "Error: could not read $field from readme.txt" >&2; exit 1; }
 done
 
-ssh "$SSH_ALIAS" "sudo mkdir -p ${REMOTE_DIR} && sudo chown www-data:www-data ${REMOTE_DIR}"
+# Every directory from / down to the release directory must be owned by root
+# and closed to group and other writes, or the files could be swapped by
+# renaming a parent.
+ssh "$SSH_ALIAS" "sudo install -d -o root -g root -m 755 ${REMOTE_DIR}"
+ssh "$SSH_ALIAS" "bash -s" <<REMOTE
+set -euo pipefail
+dir="${REMOTE_DIR}"
+while :; do
+    read -r owner mode < <(stat -c '%U %a' "\$dir")
+    if [[ "\$owner" != root ]] || (( 8#\$mode & 8#022 )); then
+        echo "Error: \$dir is \$owner \$mode; it must be owned by root and not group- or world-writable." >&2
+        exit 1
+    fi
+    [[ "\$dir" == / ]] && break
+    dir="\$(dirname "\$dir")"
+done
+REMOTE
+
+# Stage uploads in a private directory in the deploy user's home, not in the
+# world-writable /tmp, then install them as root.
+STAGE=$(ssh "$SSH_ALIAS" 'mktemp -d "$HOME/rpe-publish.XXXXXX"')
+[[ "$STAGE" == /*/rpe-publish.* ]] || { echo "Error: could not create a staging directory" >&2; exit 1; }
+trap 'ssh "$SSH_ALIAS" "rm -rf -- \"$STAGE\"" || true; rm -f "${MANIFEST_LOCAL:-}"' EXIT
+
+# Install a staged file as root and confirm the public URL serves those bytes.
+# A mismatch means nginx is not serving from REMOTE_DIR (alias missing).
+publish_file() {
+    local local_file="$1" name="$2" expected served
+    expected=$(sha256sum "$local_file" | cut -d' ' -f1)
+    scp -q "$local_file" "${SSH_ALIAS}:${STAGE}/${name}"
+    ssh "$SSH_ALIAS" "sudo install -o root -g root -m 644 '${STAGE}/${name}' '${REMOTE_DIR}/${name}'"
+    served=$(curl --fail --silent --show-error --location --max-time 60 "${PUBLIC_BASE}/${name}?verify=${expected}" | sha256sum | cut -d' ' -f1)
+    if [[ "$served" != "$expected" ]]; then
+        echo "Error: ${PUBLIC_BASE}/${name} does not serve the file just published." >&2
+        echo "  expected sha256 $expected" >&2
+        echo "  served   sha256 $served" >&2
+        exit 1
+    fi
+}
 
 echo "Uploading ${ZIP_LOCAL}"
-scp -q "$ZIP_LOCAL" "${SSH_ALIAS}:/tmp/${PLUGIN_SLUG}-${VERSION}.zip"
-ssh "$SSH_ALIAS" "sudo mv /tmp/${PLUGIN_SLUG}-${VERSION}.zip ${ZIP_REMOTE} && sudo chown www-data:www-data ${ZIP_REMOTE} && sudo chmod 644 ${ZIP_REMOTE}"
+publish_file "$ZIP_LOCAL" "${PLUGIN_SLUG}-${VERSION}.zip"
 
 CHANGELOG_SECTION=""
 if [[ -f "$PLUGIN_DIR/CHANGELOG.md" ]]; then
@@ -67,11 +117,9 @@ cat > "$MANIFEST_LOCAL" <<JSON
 JSON
 
 echo "Uploading manifest"
-scp -q "$MANIFEST_LOCAL" "${SSH_ALIAS}:/tmp/${MANIFEST_NAME}"
-ssh "$SSH_ALIAS" "sudo mv /tmp/${MANIFEST_NAME} ${MANIFEST_REMOTE} && sudo chown www-data:www-data ${MANIFEST_REMOTE} && sudo chmod 644 ${MANIFEST_REMOTE}"
-rm -f "$MANIFEST_LOCAL"
+publish_file "$MANIFEST_LOCAL" "$MANIFEST_NAME"
 
 echo ""
 echo "Published v$VERSION."
-echo "  Manifest: https://prowoos.com/wp-content/uploads/rpe-updates/${MANIFEST_NAME}"
+echo "  Manifest: $MANIFEST_URL"
 echo "  Package:  $PACKAGE_URL"
