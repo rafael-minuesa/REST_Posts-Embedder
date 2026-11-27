@@ -39,7 +39,15 @@ To show a single category or tag, add it to the endpoint, for example `?categori
 | `columns`        | Columns on desktop (1 to 5). Default: the Styling setting.                  |
 | `columns_tablet` | Columns on tablets (1 to 5), for layouts with a tablet step such as Grid. Default: the smaller of `columns` and 2. |
 
+| `category`, `tag` | `source="this-site"` only: category or tag slugs, comma-separated (any of them). |
+| `orderby`, `order` | `source="this-site"` only: `date` (default), `modified`, `title` or `comment_count`, and `DESC` (default) or `ASC`. |
+| `offset`         | `source="this-site"` only: posts to skip at the start (0 to 100).           |
+
 When `source` is set, the source's endpoint and post count are used and the `endpoint` and `count` attributes are ignored. `excerpt_length` and `layout` still override the source settings.
+
+### Posts from this site
+
+`[posts_embedder source="this-site"]` shows this site's own published posts, read from its database instead of a REST API. It works with every layout, the column attributes and Load More, and accepts `category`, `tag`, `orderby`, `order` and `offset`. It is not cached, so a new post shows at once. Cards show the publication date, and links open in the same tab. On a multilingual site (WC Multilang, Polylang) each language shows its own posts, on the page and in Load More.
 
 ### Layouts
 

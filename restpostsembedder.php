@@ -199,6 +199,7 @@ require plugin_dir_path( __FILE__ ) . 'admin/functions.php';
 // Include shortcode functions
 require plugin_dir_path( __FILE__ ) . 'shortcodes/layouts.php';
 require plugin_dir_path( __FILE__ ) . 'shortcodes/functions.php';
+require plugin_dir_path( __FILE__ ) . 'shortcodes/local.php';
 
 // Register shortcode
 add_shortcode( 'posts_embedder', 'RestPostsEmbedder\\Shortcodes\\rest_posts_embedder' );

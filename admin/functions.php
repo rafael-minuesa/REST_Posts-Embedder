@@ -328,6 +328,14 @@ function render_sources_list() {
 
         <p><?php esc_html_e('Configure multiple REST API feed sources. Use the source ID in your shortcode to display posts from different sources.', 'restpostsembedder'); ?></p>
         <p><strong><?php esc_html_e('Example:', 'restpostsembedder'); ?></strong> <code>[posts_embedder source="source-id"]</code></p>
+        <p><?php
+            printf(
+                /* translators: 1: shortcode for this site's posts, 2: list of attributes. */
+                esc_html__('To show posts from this site, no source is needed: use %1$s. It accepts %2$s.', 'restpostsembedder'),
+                '<code>[posts_embedder source="this-site"]</code>',
+                '<code>category</code>, <code>tag</code>, <code>orderby</code>, <code>order</code>, <code>offset</code>'
+            );
+        ?></p>
 
         <?php if (empty($sources)) : ?>
             <p><?php esc_html_e('No sources configured yet. Click "Add New Source" to create your first feed source.', 'restpostsembedder'); ?></p>
