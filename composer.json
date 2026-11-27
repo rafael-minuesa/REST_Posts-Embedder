@@ -14,6 +14,10 @@
     "scripts": {
         "test": "phpunit",
         "test:random": "phpunit --order-by=random",
+        "test:multisite": [
+            "@putenv WP_MULTISITE=1",
+            "phpunit"
+        ],
         "test:no-mbstring": "@php -d disable_functions=mb_strlen,mb_substr,mb_strrpos vendor/bin/phpunit"
     }
 }

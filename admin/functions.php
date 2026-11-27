@@ -68,7 +68,7 @@ function handle_source_actions() {
         return;
     }
 
-    $sources = get_option('rest_posts_embedder_sources', array());
+    $sources = \RestPostsEmbedder\get_sources();
 
     // Handle delete source
     if (isset($_POST['delete_source']) && isset($_POST['source_id'])) {
@@ -207,7 +207,7 @@ function embed_posts_settings_page_html() {
     if (isset($_GET['edit'])) {
         $edit_source = sanitize_title(wp_unslash($_GET['edit']));
         if ('new' !== $edit_source) {
-            $edit_source = \RestPostsEmbedder\Shortcodes\resolve_source_id(get_option('rest_posts_embedder_sources', array()), $edit_source);
+            $edit_source = \RestPostsEmbedder\Shortcodes\resolve_source_id(\RestPostsEmbedder\get_sources(), $edit_source);
         }
     }
 
@@ -253,10 +253,10 @@ function embed_posts_settings_page_html() {
  * @return void
  */
 function render_sources_list() {
-    $sources = get_option('rest_posts_embedder_sources', array());
+    $sources = \RestPostsEmbedder\get_sources();
 
     // Explain the demo feed while any part of the site still uses it.
-    $bare_shortcode_is_demo = \RestPostsEmbedder\Shortcodes\is_demo_endpoint(get_option('embed_posts_endpoint'));
+    $bare_shortcode_is_demo = \RestPostsEmbedder\Shortcodes\is_demo_endpoint(\RestPostsEmbedder\get_default_endpoint());
     $demo_in_use = $bare_shortcode_is_demo;
     foreach ($sources as $source) {
         if (\RestPostsEmbedder\Shortcodes\is_demo_endpoint($source['endpoint'])) {
@@ -396,7 +396,7 @@ function render_sources_list() {
  * @return void
  */
 function render_source_form($source_id) {
-    $sources = get_option('rest_posts_embedder_sources', array());
+    $sources = \RestPostsEmbedder\get_sources();
     $is_new = ($source_id === 'new');
     $source = $is_new ? array(
         'id' => '',

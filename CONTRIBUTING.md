@@ -35,7 +35,11 @@ export WP_TESTS_DB_HOST=127.0.0.1:3306
 composer test
 composer test:random
 composer test:no-mbstring
+composer test:multisite
 ```
+
+`composer test:multisite` runs the suite on a multisite network (`WP_MULTISITE=1`),
+where a few tests cover what happens on the other sites of the network.
 
 `composer test:no-mbstring` runs the suite with `mb_strlen()`, `mb_substr()` and
 `mb_strrpos()` disabled, so WordPress's own fallbacks are used, as on a host

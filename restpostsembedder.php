@@ -80,48 +80,75 @@ function rest_posts_embedder_load_textdomain() {
 add_action('plugins_loaded', 'RestPostsEmbedder\\rest_posts_embedder_load_textdomain');
 
 /**
+ * Feed sources a site starts with before it has saved any.
+ *
+ * A site that already has the single endpoint of versions before 3.0 gets it
+ * as its "Default Source"; any other site gets the demo feed.
+ *
+ * @since 3.9.0
+ * @return array Sources keyed by ID.
+ */
+function default_sources() {
+    $old_endpoint = get_option('embed_posts_endpoint', '');
+    $is_migration = is_string($old_endpoint) && '' !== $old_endpoint;
+
+    return array(
+        'default' => array(
+            'id' => 'default',
+            'name' => $is_migration ? __('Default Source', 'restpostsembedder') : __('ProWoos Demo Feed', 'restpostsembedder'),
+            'endpoint' => $is_migration ? $old_endpoint : REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT,
+            'count' => $is_migration ? get_option('embed_posts_count', REST_POSTS_EMBEDDER_DEFAULT_COUNT) : REST_POSTS_EMBEDDER_DEFAULT_COUNT,
+            'excerpt_length' => REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH,
+            'enabled' => true,
+        ),
+    );
+}
+
+/**
+ * The current site's feed sources.
+ *
+ * Activation stores the defaults for the site it runs on only. On a
+ * multisite network every other site, and every site created later, has no
+ * stored sources, so they are worked out here when read instead: a site that
+ * never saved its sources behaves exactly like a freshly activated one. A
+ * site that deleted all its sources has an empty list stored and keeps it.
+ *
+ * @since 3.9.0
+ * @return array Sources keyed by ID.
+ */
+function get_sources() {
+    $sources = get_option('rest_posts_embedder_sources', null);
+    if (null === $sources || false === $sources) {
+        return default_sources();
+    }
+    return is_array($sources) ? $sources : array();
+}
+
+/**
+ * The current site's default endpoint, for a shortcode without a source.
+ *
+ * Falls back to the demo feed on a site where the option was never stored
+ * (see get_sources()).
+ *
+ * @since 3.9.0
+ * @return string Endpoint URL.
+ */
+function get_default_endpoint() {
+    $endpoint = get_option('embed_posts_endpoint', '');
+    return (is_string($endpoint) && '' !== $endpoint) ? $endpoint : REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT;
+}
+
+/**
  * Plugin activation hook.
- * Sets up default options on activation and migrates old settings.
+ * Stores the default options for the current site. Other sites of a network
+ * need no setup: see get_sources() and get_default_endpoint().
  *
  * @since 1.0.0
  * @return void
  */
 function rest_posts_embedder_activate() {
-    // Check if we need to migrate from old single-source format
-    $sources = get_option('rest_posts_embedder_sources', array());
-
-    if (empty($sources)) {
-        // Check if old format exists
-        $old_endpoint = get_option('embed_posts_endpoint', '');
-        $old_count = get_option('embed_posts_count', REST_POSTS_EMBEDDER_DEFAULT_COUNT);
-
-        if (!empty($old_endpoint)) {
-            // Migrate old settings to new format
-            $sources = array(
-                'default' => array(
-                    'id' => 'default',
-                    'name' => __('Default Source', 'restpostsembedder'),
-                    'endpoint' => $old_endpoint,
-                    'count' => $old_count,
-                    'excerpt_length' => REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH,
-                    'enabled' => true
-                )
-            );
-        } else {
-            // Create the demo source
-            $sources = array(
-                'default' => array(
-                    'id' => 'default',
-                    'name' => __('ProWoos Demo Feed', 'restpostsembedder'),
-                    'endpoint' => REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT,
-                    'count' => REST_POSTS_EMBEDDER_DEFAULT_COUNT,
-                    'excerpt_length' => REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH,
-                    'enabled' => true
-                )
-            );
-        }
-
-        update_option('rest_posts_embedder_sources', $sources);
+    if (empty(get_option('rest_posts_embedder_sources', array()))) {
+        update_option('rest_posts_embedder_sources', default_sources());
     }
 
     // Keep old options for backward compatibility
@@ -153,18 +180,8 @@ function rest_posts_embedder_deactivate() {
 }
 register_deactivation_hook(__FILE__, 'RestPostsEmbedder\\rest_posts_embedder_deactivate');
 
-/**
- * Plugin uninstall hook.
- * Removes all plugin-related data from database.
- *
- * @since 1.0.0
- * @return void
- */
-function rest_posts_embedder_uninstall() {
-    delete_option('embed_posts_endpoint');
-    delete_option('embed_posts_count');
-}
-register_uninstall_hook(__FILE__, 'RestPostsEmbedder\\rest_posts_embedder_uninstall');
+// Uninstalling is handled by uninstall.php, which WordPress runs when the
+// plugin is deleted.
 
 /**
  * Add settings link to plugin action links.
