@@ -525,7 +525,7 @@ function remember_page_bound($endpoint, $count, $total_pages, $ttl) {
  * @return bool
  */
 function is_load_more_context_current($context, $option) {
-    $sources = \RestPostsEmbedder\get_sources();
+    $sources = get_option('rest_posts_embedder_sources', array());
     $sources = is_array($sources) ? $sources : array();
 
     if (array_key_exists('source', $context)) {
