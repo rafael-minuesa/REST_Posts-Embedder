@@ -770,27 +770,13 @@ function rest_posts_embedder_load_more() {
 }
 
 /**
- * Enqueue the plugin's CSS and Load More JavaScript.
+ * Build the CSS generated from the styling settings: grid columns, image
+ * visibility per viewport and the site's custom CSS.
  *
- * @since 1.0.0
- * @return void
+ * @since 3.9.0
+ * @return string CSS.
  */
-function display_posts_enqueue_styles() {
-    // Define the path to the CSS file
-    $css_path = plugin_dir_url( dirname(__FILE__) ) . 'assets/css/custom.css';
-
-    // Enqueue the CSS file with dynamic version
-    wp_enqueue_style( 'display-posts-style', $css_path, array(), REST_POSTS_EMBEDDER_VERSION, 'all' );
-
-    // Load More script. Lightweight and only acts when a button is present.
-    $js_path = plugin_dir_url( dirname(__FILE__) ) . 'assets/js/load-more.js';
-    wp_enqueue_script( 'rest-posts-embedder-load-more', $js_path, array(), REST_POSTS_EMBEDDER_VERSION, true );
-    wp_localize_script( 'rest-posts-embedder-load-more', 'restPostsEmbedderLoadMore', array(
-        'ajaxUrl'    => admin_url('admin-ajax.php'),
-        'loadingText' => __('Loading…', 'restpostsembedder'),
-        'errorText'   => __('Could not load more posts. Please try again.', 'restpostsembedder'),
-    ) );
-
+function build_inline_css() {
     // Get settings
     $columns_desktop = absint(get_option('embed_posts_columns_desktop', 2));
     $columns_mobile = absint(get_option('embed_posts_columns_mobile', 1));
@@ -824,6 +810,31 @@ function display_posts_enqueue_styles() {
         $inline_css .= "\n\n/* Custom CSS */\n" . $custom_css;
     }
 
-    wp_add_inline_style('display-posts-style', $inline_css);
+    return $inline_css;
+}
+
+/**
+ * Enqueue the plugin's CSS and Load More JavaScript.
+ *
+ * @since 1.0.0
+ * @return void
+ */
+function display_posts_enqueue_styles() {
+    // Define the path to the CSS file
+    $css_path = plugin_dir_url( dirname(__FILE__) ) . 'assets/css/custom.css';
+
+    // Enqueue the CSS file with dynamic version
+    wp_enqueue_style( 'display-posts-style', $css_path, array(), REST_POSTS_EMBEDDER_VERSION, 'all' );
+
+    // Load More script. Lightweight and only acts when a button is present.
+    $js_path = plugin_dir_url( dirname(__FILE__) ) . 'assets/js/load-more.js';
+    wp_enqueue_script( 'rest-posts-embedder-load-more', $js_path, array(), REST_POSTS_EMBEDDER_VERSION, true );
+    wp_localize_script( 'rest-posts-embedder-load-more', 'restPostsEmbedderLoadMore', array(
+        'ajaxUrl'    => admin_url('admin-ajax.php'),
+        'loadingText' => __('Loading…', 'restpostsembedder'),
+        'errorText'   => __('Could not load more posts. Please try again.', 'restpostsembedder'),
+    ) );
+
+    wp_add_inline_style('display-posts-style', build_inline_css());
 }
 add_action( 'wp_enqueue_scripts', 'RestPostsEmbedder\\Shortcodes\\display_posts_enqueue_styles' );

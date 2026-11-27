@@ -1,6 +1,6 @@
 <?php
 
-use function RestPostsEmbedder\Shortcodes\display_posts_enqueue_styles;
+use function RestPostsEmbedder\Shortcodes\build_inline_css;
 
 /** Byline dates, unexpected feed field types and the generated image CSS. */
 class RenderingTest extends WP_UnitTestCase {
@@ -28,10 +28,6 @@ class RenderingTest extends WP_UnitTestCase {
         remove_filter('pre_http_request', array($this, 'intercept_request'), PHP_INT_MAX);
         // phpcs:ignore WordPress.DateTime.RestrictedFunctions.timezone_change_date_default_timezone_set
         date_default_timezone_set($this->php_timezone);
-        wp_dequeue_style('display-posts-style');
-        wp_deregister_style('display-posts-style');
-        wp_dequeue_script('rest-posts-embedder-load-more');
-        wp_deregister_script('rest-posts-embedder-load-more');
         parent::tear_down();
     }
 
@@ -196,8 +192,7 @@ class RenderingTest extends WP_UnitTestCase {
     public function test_image_visibility_rules_apply_to_their_own_viewport_only($desktop, $mobile) {
         update_option('embed_posts_show_images_desktop', $desktop);
         update_option('embed_posts_show_images_mobile', $mobile);
-        display_posts_enqueue_styles();
-        $css = preg_replace('/\s+/', ' ', implode("\n", wp_styles()->get_data('display-posts-style', 'after')));
+        $css = preg_replace('/\s+/', ' ', build_inline_css());
 
         $desktop_rule = '@media only screen and (min-width: 769px) { .embed-posts img { display: none; } }';
         $mobile_rule = '.embed-posts img { display: none !important; }';
