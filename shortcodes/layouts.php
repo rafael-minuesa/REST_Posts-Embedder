@@ -3,7 +3,7 @@
  * Card layouts for REST Posts Embedder.
  *
  * A layout is a PHP template that turns one post's card data into HTML. The
- * plugin ships "Classic"; more are registered through the
+ * plugin ships "Classic" and "Grid"; more are registered through the
  * rest_posts_embedder_layouts filter. Every feed resolves its layout from the
  * shortcode attribute, then its source, then the site setting.
  *
@@ -33,6 +33,10 @@ function get_layouts() {
         DEFAULT_LAYOUT => array(
             'label'    => __('Classic', 'restpostsembedder'),
             'template' => dirname(__DIR__) . '/templates/layouts/classic.php',
+        ),
+        'grid' => array(
+            'label'    => __('Grid', 'restpostsembedder'),
+            'template' => dirname(__DIR__) . '/templates/layouts/grid.php',
         ),
     );
 
