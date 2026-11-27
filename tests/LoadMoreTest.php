@@ -14,6 +14,7 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
     private $total_pages;
     private $failure;
     private $requests;
+    private $cleanup = array();
 
     public function set_up() {
         parent::set_up();
@@ -36,6 +37,10 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
     }
 
     public function tear_down() {
+        foreach ($this->cleanup as $cleanup) {
+            $cleanup();
+        }
+        $this->cleanup = array();
         remove_filter('pre_http_request', array($this, 'intercept_request'), PHP_INT_MAX);
         parent::tear_down();
     }
@@ -124,7 +129,7 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
             $match
         ));
         $this->assertSame(
-            array('endpoint' => self::ENDPOINT, 'count' => 2, 'excerpt_length' => 200),
+            array('endpoint' => self::ENDPOINT, 'count' => 2, 'excerpt_length' => 200, 'source' => '', 'revision' => ''),
             get_option('rest_posts_embedder_lm_' . $match[1])
         );
 
@@ -191,12 +196,221 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
         $this->assertTrue($response['data']['expired']);
     }
 
-    public function test_page_beyond_the_last_is_an_error() {
+    /** @dataProvider pages_past_the_end */
+    public function test_page_beyond_the_known_end_is_the_end_of_the_list_without_a_request($page) {
         $token = $this->rendered_token();
-        $response = $this->load_more(array('token' => $token, 'page' => '4'));
-        $this->assertFalse($response['success']);
-        $this->assertSame('Unable to fetch posts. Server returned HTTP error 400. Please verify the endpoint URL is correct.', $response['data']['message']);
-        $this->assertArrayNotHasKey('html', $response['data']);
+        $response = $this->load_more(array('token' => $token, 'page' => $page));
+        $this->assertSame(array('success' => true, 'data' => array('html' => '', 'has_more' => false)), $response);
+        $this->assertCount(0, $this->requests, 'The number of pages is known; no request is needed.');
+    }
+
+    public static function pages_past_the_end() {
+        return array('next after last' => array('4'), 'far' => array('5000'), 'huge' => array('99999999999999999999'));
+    }
+
+    public function test_shrinking_feed_ends_the_list_once_and_is_not_logged() {
+        $token = $this->rendered_token();
+        // The remote lost a page after the button was rendered with three.
+        $this->total_pages = 2;
+        $log = $this->capture_error_log();
+
+        $response = $this->load_more(array('token' => $token, 'page' => '3'));
+        $this->assertSame(array('success' => true, 'data' => array('html' => '', 'has_more' => false)), $response);
+        $this->assertCount(1, $this->requests);
+
+        // The new end is remembered: retries and later pages cost nothing.
+        $this->load_more(array('token' => $token, 'page' => '3'));
+        $this->load_more(array('token' => $token, 'page' => '4'));
+        $this->assertCount(1, $this->requests);
+        $this->assertSame('', file_get_contents($log), 'The end of a feed is not an error.');
+
+        // Pages that still exist keep working.
+        $second = $this->load_more(array('token' => $token, 'page' => '2'));
+        $this->assertStringContainsString('<h3>Remote post page 2</h3>', $second['data']['html']);
+    }
+
+    public function test_unknown_page_count_is_learned_from_the_first_request_past_the_end() {
+        $token = $this->rendered_token();
+        // As after an object-cache eviction: the number of pages is no longer known.
+        delete_transient(\RestPostsEmbedder\Shortcodes\page_bound_key(self::ENDPOINT, 2));
+
+        $this->assertFalse($this->load_more(array('token' => $token, 'page' => '50'))['data']['has_more']);
+        $this->assertCount(1, $this->requests);
+        foreach (array('50', '51', '7000') as $page) {
+            $this->assertFalse($this->load_more(array('token' => $token, 'page' => $page))['data']['has_more']);
+        }
+        $this->assertCount(1, $this->requests, 'Pages past a known end must not reach the remote feed.');
+    }
+
+    public function test_empty_page_is_the_end_of_the_list() {
+        $token = $this->rendered_token();
+        $this->failure = $this->response(200, '[]');
+        $response = $this->load_more(array('token' => $token, 'page' => '2'));
+        $this->assertSame(array('success' => true, 'data' => array('html' => '', 'has_more' => false)), $response);
+        $this->load_more(array('token' => $token, 'page' => '2'));
+        $this->assertCount(1, $this->requests);
+    }
+
+    /** Send error_log() to a file for the rest of the test and return its path. */
+    private function capture_error_log() {
+        $file = tempnam(sys_get_temp_dir(), 'rpe-log');
+        $previous = ini_set('error_log', $file);
+        $this->cleanup[] = function () use ($file, $previous) {
+            ini_set('error_log', (string) $previous);
+            unlink($file);
+        };
+        return $file;
+    }
+
+    private function save_source($overrides = array()) {
+        update_option('rest_posts_embedder_sources', array('my-feed' => array_merge(array(
+            'id' => 'my-feed', 'name' => 'My feed', 'endpoint' => self::ENDPOINT,
+            'count' => 2, 'excerpt_length' => 200, 'enabled' => true,
+        ), $overrides)));
+    }
+
+    /** Render a named source and return its button's token. */
+    private function source_token() {
+        $this->save_source();
+        $html = do_shortcode('[posts_embedder source="my-feed"]');
+        $this->assertSame(1, preg_match('/data-token="([^"]*)"/', $html, $match), 'Load More button missing.');
+        $this->requests = array();
+        return $match[1];
+    }
+
+    private function assert_expired($token) {
+        $response = $this->load_more(array('token' => $token, 'page' => '2'));
+        $this->assert_rejected($response, 'This feed has expired. Please refresh the page.');
+        $this->assertTrue($response['data']['expired']);
+        $this->assertFalse(get_option('rest_posts_embedder_lm_' . $token), 'The retired context must be forgotten.');
+    }
+
+    public function test_source_button_records_its_source() {
+        $token = $this->source_token();
+        $context = get_option('rest_posts_embedder_lm_' . $token);
+        $this->assertSame('my-feed', $context['source']);
+        $this->assertSame(md5(self::ENDPOINT . '|2'), $context['revision']);
+        $this->assertTrue($this->load_more(array('token' => $token, 'page' => '2'))['success']);
+        // The same endpoint outside a source is a different button.
+        $this->assertNotSame($token, $this->rendered_token());
+    }
+
+    /** @dataProvider retiring_changes */
+    public function test_button_of_a_changed_or_retired_source_expires_without_a_request($change) {
+        $token = $this->source_token();
+        if ('delete' === $change) {
+            update_option('rest_posts_embedder_sources', array());
+        } else {
+            $this->save_source($change);
+        }
+        $this->assert_expired($token);
+
+        // Undoing the change does not bring the old button back.
+        $this->save_source();
+        $response = $this->load_more(array('token' => $token, 'page' => '2'));
+        $this->assert_rejected($response, 'This feed has expired. Please refresh the page.');
+    }
+
+    public static function retiring_changes() {
+        return array(
+            'disabled' => array(array('enabled' => false)),
+            'deleted' => array('delete'),
+            'endpoint edited' => array(array('endpoint' => 'https://93.184.216.34/other/wp-json/wp/v2/posts')),
+            'batch size edited' => array(array('count' => 4)),
+        );
+    }
+
+    public function test_button_survives_changes_that_do_not_alter_what_it_fetches() {
+        $token = $this->source_token();
+        $this->save_source(array('name' => 'Renamed', 'excerpt_length' => 50));
+        $response = $this->load_more(array('token' => $token, 'page' => '2'));
+        $this->assertTrue($response['success']);
+        $this->assertStringContainsString('<h3>Remote post page 2</h3>', $response['data']['html']);
+    }
+
+    /** A context as 3.8.0 stored it: no source, no revision. */
+    private function legacy_token($endpoint, $extra = array()) {
+        $token = md5('legacy' . $endpoint . wp_json_encode($extra));
+        update_option('rest_posts_embedder_lm_' . $token, array_merge(
+            array('endpoint' => $endpoint, 'count' => 2, 'excerpt_length' => 200),
+            $extra
+        ), false);
+        return $token;
+    }
+
+    public function test_context_from_an_earlier_version_works_while_its_feed_is_still_configured() {
+        // Matches the default endpoint option.
+        $token = $this->legacy_token(self::ENDPOINT);
+        $this->assertTrue($this->load_more(array('token' => $token, 'page' => '2'))['success']);
+        $this->assertArrayNotHasKey('legacy_until', get_option('rest_posts_embedder_lm_' . $token));
+
+        // Matches an enabled source.
+        $other = 'https://93.184.216.34/other/wp-json/wp/v2/posts';
+        $this->save_source(array('endpoint' => $other));
+        $token = $this->legacy_token($other);
+        $this->assertTrue($this->load_more(array('token' => $token, 'page' => '2'))['success']);
+        $this->assertArrayNotHasKey('legacy_until', get_option('rest_posts_embedder_lm_' . $token));
+    }
+
+    public function test_unmatched_context_from_an_earlier_version_gets_a_grace_period_then_expires() {
+        $retired = 'https://93.184.216.34/retired/wp-json/wp/v2/posts';
+        $token = $this->legacy_token($retired);
+
+        $this->assertTrue($this->load_more(array('token' => $token, 'page' => '2'))['success']);
+        $until = get_option('rest_posts_embedder_lm_' . $token)['legacy_until'];
+        $this->assertEqualsWithDelta(time() + 30 * DAY_IN_SECONDS, $until, 5);
+
+        // Further use does not extend it.
+        $this->load_more(array('token' => $token, 'page' => '3'));
+        $this->assertSame($until, get_option('rest_posts_embedder_lm_' . $token)['legacy_until']);
+
+        $this->requests = array();
+        $expired = $this->legacy_token($retired, array('legacy_until' => time() - 1));
+        $this->assert_expired($expired);
+    }
+
+    public function test_disabled_source_does_not_keep_an_earlier_context_alive() {
+        $retired = 'https://93.184.216.34/retired/wp-json/wp/v2/posts';
+        $this->save_source(array('endpoint' => $retired, 'enabled' => false));
+        $this->assert_expired($this->legacy_token($retired, array('legacy_until' => time() - 1)));
+    }
+
+    /** @dataProvider logged_failures */
+    public function test_failed_requests_do_not_log_the_query_string($failure) {
+        update_option('embed_posts_endpoint', self::ENDPOINT . '?api_key=SECRET-KEY&signature=SECRET-SIG');
+        $log = $this->capture_error_log();
+        $this->failure = $failure;
+        $html = do_shortcode('[posts_embedder]');
+        $this->assertStringContainsString('Unable to fetch posts.', $html);
+
+        $logged = file_get_contents($log);
+        $this->assertStringContainsString('Endpoint: https://93.184.216.34/wp-json/wp/v2/posts?[redacted]', $logged);
+        $this->assertStringNotContainsString('SECRET', $logged);
+        $this->assertStringNotContainsString('api_key', $logged);
+    }
+
+    public function logged_failures() {
+        return array(
+            'transport error' => array(new WP_Error('http_request_failed', 'Operation timed out')),
+            'HTTP status' => array(array('headers' => array(), 'body' => '', 'response' => array('code' => 503, 'message' => ''), 'cookies' => array())),
+        );
+    }
+
+    /** @dataProvider urls_to_redact */
+    public function test_redacted_url_keeps_only_scheme_host_port_and_path($url, $expected) {
+        $this->assertSame($expected, \RestPostsEmbedder\Shortcodes\redact_url($url));
+    }
+
+    public static function urls_to_redact() {
+        return array(
+            'plain' => array('https://example.org/wp-json/wp/v2/posts', 'https://example.org/wp-json/wp/v2/posts'),
+            'query' => array('https://example.org/wp-json/wp/v2/posts?key=abc&lang=en', 'https://example.org/wp-json/wp/v2/posts?[redacted]'),
+            'credentials' => array('https://user:pass@example.org:8443/feed?x=1#frag', 'https://example.org:8443/feed?[redacted]'),
+            'no path' => array('http://example.org', 'http://example.org'),
+            'not a URL' => array('not a url', '[unparseable URL]'),
+            'empty' => array('', '[unparseable URL]'),
+            'array' => array(array('https://example.org'), '[unparseable URL]'),
+        );
     }
 
     public function test_remote_failure_is_an_escaped_error_and_not_cached() {

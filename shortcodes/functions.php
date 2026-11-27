@@ -141,6 +141,10 @@ function rest_posts_embedder($atts = array()) {
         'excerpt_length' => '',
     ), $atts, 'posts_embedder');
 
+    // Source this feed is bound to, for its Load More button ('' = none).
+    $bound_source   = '';
+    $bound_revision = '';
+
     // Multi-source support
     if (!empty($atts['source'])) {
         $sources = get_option('rest_posts_embedder_sources', array());
@@ -160,6 +164,8 @@ function rest_posts_embedder($atts = array()) {
             // Use source configuration
             $atts['endpoint'] = $source['endpoint'];
             $atts['count'] = $source['count'];
+            $bound_source   = $source_id;
+            $bound_revision = source_revision($source);
             // Only inherit the source excerpt length when not overridden inline.
             if ('' === $atts['excerpt_length'] && isset($source['excerpt_length'])) {
                 $atts['excerpt_length'] = $source['excerpt_length'];
@@ -239,8 +245,11 @@ function rest_posts_embedder($atts = array()) {
     // invalidates it on any cache backend. The cached HTML holds translated
     // text ("Read more...", the date), so the display locale is part of the key
     // too: one visitor's language must not be served to the next.
+    // The HTML also holds the Load More button, whose token is tied to the
+    // source the feed came from, so that is part of the key as well: a named
+    // source and a plain endpoint must not share each other's button.
     $locale    = determine_locale();
-    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length . '_' . $locale);
+    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length . '_' . $locale . '_' . $bound_source . '_' . $bound_revision);
 
     // Try to get cached posts
     $cached_posts = get_transient($cache_key);
@@ -262,6 +271,8 @@ function rest_posts_embedder($atts = array()) {
         return $demo_notice . '<p>' . $fetch['error'] . '</p>';
     }
 
+    remember_page_bound($endpoint, $count, $fetch['total_pages'], \RestPostsEmbedder\Admin\get_cache_expiration());
+
     $remote_posts = $fetch['posts'];
     if (empty($remote_posts) || !is_array($remote_posts)) {
         return $demo_notice . '<p>' . __('No posts found.', 'restpostsembedder') . '</p>';
@@ -277,7 +288,7 @@ function rest_posts_embedder($atts = array()) {
     // token maps back to the endpoint/count/excerpt so the AJAX handler never
     // receives a client-supplied URL.
     if ($fetch['total_pages'] > 1) {
-        $allposts .= render_load_more_button($endpoint, $count, $excerpt_length, $fetch['total_pages'], $locale);
+        $allposts .= render_load_more_button($endpoint, $count, $excerpt_length, $fetch['total_pages'], $locale, $bound_source, $bound_revision);
     }
 
     $allposts .= '</div>'; // Close embed-posts-container
@@ -309,10 +320,11 @@ function rest_posts_embedder($atts = array()) {
  *     @type array       $posts       Decoded post objects (empty on error).
  *     @type int         $total_pages Total available pages (0 if unknown).
  *     @type string|null $error       Translated, escaped error message or null.
+ *     @type int         $status      HTTP status of the response (0 when the request failed).
  * }
  */
 function fetch_posts_page($endpoint, $count, $page) {
-    $result = array('posts' => array(), 'total_pages' => 0, 'error' => null);
+    $result = array('posts' => array(), 'total_pages' => 0, 'error' => null, 'status' => 0);
 
     $args = array(
         'timeout'   => 10,
@@ -337,7 +349,7 @@ function fetch_posts_page($endpoint, $count, $page) {
 
     if (is_wp_error($response)) {
         $error_message = $response->get_error_message();
-        error_log('REST Posts Embedder Error: ' . $error_message . ' | Endpoint: ' . $endpoint);
+        error_log('REST Posts Embedder Error: ' . $error_message . ' | Endpoint: ' . redact_url($endpoint));
         $result['error'] = sprintf(
             __('Unable to fetch posts. Error: %s. Please check your endpoint URL in the plugin settings.', 'restpostsembedder'),
             esc_html($error_message)
@@ -346,9 +358,14 @@ function fetch_posts_page($endpoint, $count, $page) {
     }
 
     $response_code = wp_remote_retrieve_response_code($response);
+    $result['status'] = (int) $response_code;
     if ($response_code !== 200) {
-        // A request past the last page returns 400 with code rest_post_invalid_page_number.
-        error_log('REST Posts Embedder HTTP Error: ' . $response_code . ' | Endpoint: ' . $endpoint);
+        // A request past the last page returns 400 with code
+        // rest_post_invalid_page_number. That is the normal end of a feed that
+        // shrank, not a fault, and anyone can trigger it, so it is not logged.
+        if (!(400 === $result['status'] && $page > 1)) {
+            error_log('REST Posts Embedder HTTP Error: ' . $response_code . ' | Endpoint: ' . redact_url($endpoint));
+        }
         $result['error'] = sprintf(
             __('Unable to fetch posts. Server returned HTTP error %d. Please verify the endpoint URL is correct.', 'restpostsembedder'),
             (int) $response_code
@@ -370,6 +387,141 @@ function fetch_posts_page($endpoint, $count, $page) {
     $result['total_pages'] = (int) wp_remote_retrieve_header($response, 'x-wp-totalpages');
 
     return $result;
+}
+
+/**
+ * Reduce a URL to scheme, host and path for the error log.
+ *
+ * A feed URL can carry credentials in its query string (an API key, a signed
+ * URL) or in a user:password@ prefix. Those must not be copied into the PHP
+ * error log, which is often readable by more people than the settings are.
+ *
+ * @since 3.9.0
+ * @param mixed $url URL to redact.
+ * @return string Redacted URL, or a placeholder when it cannot be parsed.
+ */
+function redact_url($url) {
+    $parts = is_string($url) ? wp_parse_url($url) : false;
+    if (!is_array($parts) || empty($parts['host'])) {
+        return '[unparseable URL]';
+    }
+    $redacted = (isset($parts['scheme']) ? $parts['scheme'] . '://' : '') . $parts['host'];
+    if (isset($parts['port'])) {
+        $redacted .= ':' . $parts['port'];
+    }
+    if (isset($parts['path'])) {
+        $redacted .= $parts['path'];
+    }
+    return $redacted . (isset($parts['query']) ? '?[redacted]' : '');
+}
+
+/**
+ * Revision of a feed source's fetch configuration.
+ *
+ * Changes when the endpoint or the batch size changes, the two settings that
+ * decide what a Load More button fetches. Renaming a source or changing its
+ * excerpt length keeps the revision, so buttons on cached pages keep working.
+ *
+ * @since 3.9.0
+ * @param mixed $source Stored source.
+ * @return string Revision hash.
+ */
+function source_revision($source) {
+    $endpoint = (is_array($source) && isset($source['endpoint']) && is_string($source['endpoint'])) ? $source['endpoint'] : '';
+    $count    = (is_array($source) && isset($source['count'])) ? absint($source['count']) : 0;
+    return md5($endpoint . '|' . $count);
+}
+
+/**
+ * Transient name of the known number of pages for a feed.
+ *
+ * @since 3.9.0
+ * @param string $endpoint Endpoint URL.
+ * @param int    $count    Posts per page.
+ * @return string
+ */
+function page_bound_key($endpoint, $count) {
+    return 'rest_posts_embedder_tp_' . md5(\RestPostsEmbedder\Admin\get_cache_generation() . '|' . $endpoint . '|' . $count);
+}
+
+/**
+ * Remember how many pages a feed has, so the public Load More handler can
+ * answer requests past the end without contacting the remote site.
+ *
+ * @since 3.9.0
+ * @param string $endpoint    Endpoint URL.
+ * @param int    $count       Posts per page.
+ * @param int    $total_pages Number of pages (ignored when not positive).
+ * @param int    $ttl         Seconds to remember it for.
+ * @return void
+ */
+function remember_page_bound($endpoint, $count, $total_pages, $ttl) {
+    $total_pages = (int) $total_pages;
+    if ($total_pages > 0) {
+        set_transient(page_bound_key($endpoint, $count), $total_pages, max(MINUTE_IN_SECONDS, (int) $ttl));
+    }
+}
+
+/**
+ * Whether a stored Load More context may still be used.
+ *
+ * A button on a cached page keeps its token for as long as that page is
+ * cached, but the feed behind it can be edited, disabled or deleted in the
+ * meantime. A context bound to a source is valid only while that source
+ * exists, is enabled and still fetches the same endpoint and batch size.
+ *
+ * Contexts written by 3.8.0 and earlier do not record their source. They are
+ * accepted while they match a feed that is configured now. Any other one may
+ * belong to a shortcode with an inline endpoint, which cannot be looked up,
+ * so it gets a grace period from its first use after the update and then
+ * expires.
+ *
+ * @since 3.9.0
+ * @param array  $context Stored context.
+ * @param string $option  Name of the option holding it.
+ * @return bool
+ */
+function is_load_more_context_current($context, $option) {
+    $sources = get_option('rest_posts_embedder_sources', array());
+    $sources = is_array($sources) ? $sources : array();
+
+    if (array_key_exists('source', $context)) {
+        if ('' === $context['source']) {
+            return true; // Not bound to a source.
+        }
+        $source = isset($sources[$context['source']]) ? $sources[$context['source']] : null;
+        return is_array($source)
+            && !empty($source['enabled'])
+            && isset($context['revision'])
+            && source_revision($source) === $context['revision'];
+    }
+
+    // Context from 3.8.0 or earlier.
+    $normalize = function ($endpoint) {
+        $endpoint = esc_url_raw((string) $endpoint, array('http', 'https'));
+        return is_demo_endpoint($endpoint) ? REST_POSTS_EMBEDDER_DEFAULT_ENDPOINT : $endpoint;
+    };
+    $endpoint = $normalize($context['endpoint']);
+    $count    = isset($context['count']) ? absint($context['count']) : 0;
+
+    foreach ($sources as $source) {
+        if (
+            is_array($source) && !empty($source['enabled']) && isset($source['endpoint'], $source['count'])
+            && $normalize($source['endpoint']) === $endpoint && absint($source['count']) === $count
+        ) {
+            return true;
+        }
+    }
+    if ($normalize(get_option('embed_posts_endpoint')) === $endpoint) {
+        return true;
+    }
+
+    if (empty($context['legacy_until'])) {
+        $context['legacy_until'] = time() + REST_POSTS_EMBEDDER_LEGACY_CONTEXT_GRACE;
+        update_option($option, $context, false);
+        return true;
+    }
+    return time() < (int) $context['legacy_until'];
 }
 
 /**
@@ -610,20 +762,27 @@ function render_single_post($remote_post, $excerpt_length) {
  * @param int    $total_pages    Total pages available.
  * @param string $locale         Locale the page was rendered in. Sent back by
  *                               the button so appended posts match the page.
+ * @param string $source         ID of the source the feed comes from ('' for
+ *                               a feed that is not a named source).
+ * @param string $revision       source_revision() of that source.
  * @return string Button HTML.
  */
-function render_load_more_button($endpoint, $count, $excerpt_length, $total_pages, $locale = '') {
-    $token = md5('v2_' . $endpoint . '|' . $count . '|' . $excerpt_length);
+function render_load_more_button($endpoint, $count, $excerpt_length, $total_pages, $locale = '', $source = '', $revision = '') {
+    $token = md5('v3_' . $source . '|' . $revision . '|' . $endpoint . '|' . $count . '|' . $excerpt_length);
 
     // Persist the token -> context mapping as a non-autoloaded option rather
     // than a transient. Page caches can serve this button for days or weeks,
     // and a transient (or an object-cache eviction) would break it long before
     // the cached page is refreshed. The token is deterministic, so each feed
-    // configuration writes its row once.
+    // configuration writes its row once. The source and its revision let the
+    // AJAX handler refuse the button once that source is edited, disabled or
+    // deleted.
     $context = array(
         'endpoint'       => $endpoint,
         'count'          => $count,
         'excerpt_length' => $excerpt_length,
+        'source'         => $source,
+        'revision'       => $revision,
     );
     $option = 'rest_posts_embedder_lm_' . $token;
     if (get_option($option) !== $context) {
@@ -719,7 +878,14 @@ function rest_posts_embedder_load_more() {
             update_option($option, $context, false);
         }
     }
-    if (!is_array($context) || empty($context['endpoint'])) {
+    $expired = !is_array($context) || empty($context['endpoint']) || !is_string($context['endpoint']);
+    if (!$expired && !is_load_more_context_current($context, $option)) {
+        // The feed behind this button was changed or retired. Forget the
+        // context so the old endpoint can never be fetched through it again.
+        delete_option($option);
+        $expired = true;
+    }
+    if ($expired) {
         wp_send_json_error(array(
             'message' => __('This feed has expired. Please refresh the page.', 'restpostsembedder'),
             'expired' => true,
@@ -730,6 +896,15 @@ function rest_posts_embedder_load_more() {
     $count          = absint($context['count']);
     $count          = ($count > 0 && $count <= REST_POSTS_EMBEDDER_MAX_COUNT) ? $count : REST_POSTS_EMBEDDER_DEFAULT_COUNT;
     $excerpt_length = isset($context['excerpt_length']) ? sanitize_excerpt_length($context['excerpt_length']) : 0;
+
+    // A page past the known end of the feed needs no request. Without this,
+    // anyone could make the site fetch (and log) one failing request per page
+    // number. The button is removed when has_more is false.
+    $end_of_feed = array('html' => '', 'has_more' => false);
+    $page_bound  = get_transient(page_bound_key($endpoint, $count));
+    if (false !== $page_bound && $page > (int) $page_bound) {
+        wp_send_json_success($end_of_feed);
+    }
 
     // Cache each rendered page so repeated clicks don't re-hit the remote. The
     // HTML holds translated text, so the locale is part of the key.
@@ -743,12 +918,17 @@ function rest_posts_embedder_load_more() {
     // "Read more..." match the posts already on the page.
     $result = with_locale($locale, function () use ($endpoint, $count, $page, $excerpt_length) {
         $fetch = fetch_posts_page($endpoint, $count, $page);
+        // The feed is shorter than the button believed: the remote answers 400
+        // (rest_post_invalid_page_number) or an empty list. That is the end of
+        // the list, not an error. Remember it briefly, as the feed can grow.
+        if (400 === $fetch['status'] || (empty($fetch['error']) && empty($fetch['posts']))) {
+            remember_page_bound($endpoint, $count, $page - 1, 5 * MINUTE_IN_SECONDS);
+            return array('payload' => array('html' => '', 'has_more' => false), 'cache' => false);
+        }
         if (!empty($fetch['error'])) {
             return array('error' => $fetch['error']);
         }
-        if (empty($fetch['posts'])) {
-            return array('payload' => array('html' => '', 'has_more' => false), 'cache' => false);
-        }
+        remember_page_bound($endpoint, $count, $fetch['total_pages'], \RestPostsEmbedder\Admin\get_cache_expiration());
         return array(
             'payload' => array(
                 'html'     => render_articles($fetch['posts'], $excerpt_length),

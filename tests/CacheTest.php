@@ -157,6 +157,6 @@ class CacheTest extends WP_UnitTestCase {
     }
 
     private function first_page_key() {
-        return 'rest_posts_embedder_' . md5('v2_' . get_option('rest_posts_embedder_cache_generation') . '_' . self::ENDPOINT . '_5_200_' . determine_locale());
+        return 'rest_posts_embedder_' . md5('v2_' . get_option('rest_posts_embedder_cache_generation') . '_' . self::ENDPOINT . '_5_200_' . determine_locale() . '__');
     }
 }

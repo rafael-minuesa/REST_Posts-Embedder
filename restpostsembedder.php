@@ -61,6 +61,12 @@ if (!defined('REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH')) {
 if (!defined('REST_POSTS_EMBEDDER_MAX_EXCERPT_LENGTH')) {
     define('REST_POSTS_EMBEDDER_MAX_EXCERPT_LENGTH', 2000);
 }
+// Load More contexts stored by 3.8.0 and earlier do not record which source
+// they belong to. One that matches no feed configured now keeps working for
+// this long after its first use, then expires.
+if (!defined('REST_POSTS_EMBEDDER_LEGACY_CONTEXT_GRACE')) {
+    define('REST_POSTS_EMBEDDER_LEGACY_CONTEXT_GRACE', 30 * DAY_IN_SECONDS);
+}
 
 /**
  * Load plugin text domain for internationalization.
