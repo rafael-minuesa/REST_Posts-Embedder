@@ -364,7 +364,9 @@ function fetch_posts_page($endpoint, $count, $page) {
         return $result;
     }
 
-    $result['posts'] = is_array($remote_posts) ? $remote_posts : array();
+    // A list of posts is a JSON array of objects. Drop anything else (an API
+    // error object, nulls, strings) so one bad item cannot break the page.
+    $result['posts'] = is_array($remote_posts) ? array_values(array_filter($remote_posts, 'is_object')) : array();
     $result['total_pages'] = (int) wp_remote_retrieve_header($response, 'x-wp-totalpages');
 
     return $result;
@@ -384,9 +386,56 @@ function fetch_posts_page($endpoint, $count, $page) {
 function render_articles($remote_posts, $excerpt_length) {
     $html = '';
     foreach ($remote_posts as $remote_post) {
+        // A feed item that is not a post object cannot be rendered; skip it
+        // so the rest of the page stays usable.
+        if (!is_object($remote_post)) {
+            continue;
+        }
         $html .= render_single_post($remote_post, $excerpt_length);
     }
     return $html;
+}
+
+/**
+ * Read a text field from a remote post.
+ *
+ * A successful JSON decode says nothing about the type of each field. The
+ * renderer passes these values to functions that require strings, and an
+ * array or object there is a fatal error on PHP 8. Anything that is not a
+ * string counts as missing.
+ *
+ * @since 3.9.0
+ * @param mixed $value Decoded JSON value.
+ * @return string The value, or '' when it is not a string.
+ */
+function feed_string($value) {
+    return is_string($value) ? $value : '';
+}
+
+/**
+ * Convert a remote post's GMT date to a Unix timestamp.
+ *
+ * The REST API returns dates without a timezone, as "2026-07-01T22:30:00".
+ * The *_gmt fields are UTC by definition, so the string is parsed as UTC
+ * explicitly instead of in whatever timezone PHP defaults to.
+ *
+ * @since 3.9.0
+ * @param mixed $gmt_date Value of a *_gmt field.
+ * @return int|false Timestamp, or false when the value is not a valid date.
+ */
+function feed_gmt_timestamp($gmt_date) {
+    if (!is_string($gmt_date) || !preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/', $gmt_date)) {
+        return false;
+    }
+    $date = date_create_immutable($gmt_date, new \DateTimeZone('UTC'));
+    if (!$date) {
+        return false;
+    }
+    // Reject dates PHP silently rolls over, such as 2026-02-31.
+    if ($date->format('Y-m-d\TH:i:s') !== $gmt_date) {
+        return false;
+    }
+    return $date->getTimestamp();
 }
 
 /**
@@ -399,12 +448,17 @@ function render_articles($remote_posts, $excerpt_length) {
  */
 function render_single_post($remote_post, $excerpt_length) {
     // Safely extract post data
-    $title = isset($remote_post->title->rendered) ? esc_html($remote_post->title->rendered) : __('Untitled', 'restpostsembedder');
-    $link = isset($remote_post->link) ? esc_url($remote_post->link) : '';
+    $title = feed_string(isset($remote_post->title->rendered) ? $remote_post->title->rendered : '');
+    $title = '' !== $title ? esc_html($title) : __('Untitled', 'restpostsembedder');
+    $link = esc_url(feed_string(isset($remote_post->link) ? $remote_post->link : ''));
     // Translatable date format so locales can drop the English ordinal/"of".
     // English: "8th of June 2026"; Spanish (es_ES catalog): "8 de junio 2026".
     $date_format = _x('jS \of F Y', 'embedded post date format', 'restpostsembedder');
-    $fordate = isset($remote_post->modified) ? wp_date($date_format, strtotime($remote_post->modified)) : '';
+    // Use the GMT field: "modified" is in the remote site's own timezone, which
+    // this site does not know. wp_date() then formats once, in this site's
+    // timezone. Without a valid date the byline shows the author alone.
+    $timestamp = feed_gmt_timestamp(isset($remote_post->modified_gmt) ? $remote_post->modified_gmt : null);
+    $fordate = false !== $timestamp ? (string) wp_date($date_format, $timestamp) : '';
 
     // Featured image. Collect every available size and emit a responsive
     // srcset so the browser picks a sharp source for the rendered slot. The
@@ -412,25 +466,37 @@ function render_single_post($remote_post, $excerpt_length) {
     // (e.g. 300px shown at ~600px) and blurred.
     $thumb_url    = '';
     $thumb_srcset = '';
-    if (!empty($remote_post->featured_media) && isset($remote_post->_embedded->{'wp:featuredmedia'}[0])) {
+    $media = null;
+    if (
+        !empty($remote_post->featured_media)
+        && isset($remote_post->_embedded->{'wp:featuredmedia'})
+        && is_array($remote_post->_embedded->{'wp:featuredmedia'})
+        && isset($remote_post->_embedded->{'wp:featuredmedia'}[0])
+        && is_object($remote_post->_embedded->{'wp:featuredmedia'}[0])
+    ) {
         $media = $remote_post->_embedded->{'wp:featuredmedia'}[0];
+    }
+    if ($media) {
+        $media_url = feed_string(isset($media->source_url) ? $media->source_url : '');
 
         $candidates = array(); // width (int) => source_url
-        if (isset($media->media_details->sizes)) {
-            foreach ($media->media_details->sizes as $size_name => $size) {
+        $sizes = isset($media->media_details->sizes) ? $media->media_details->sizes : null;
+        if (is_object($sizes) || is_array($sizes)) {
+            foreach ($sizes as $size_name => $size) {
                 // Skip the square "thumbnail" crop — its aspect ratio differs
                 // from the others and would distort a width-based srcset.
-                if ('thumbnail' === $size_name) {
+                if ('thumbnail' === $size_name || !is_object($size)) {
                     continue;
                 }
-                if (!empty($size->source_url) && !empty($size->width)) {
-                    $candidates[(int) $size->width] = $size->source_url;
+                $size_url = feed_string(isset($size->source_url) ? $size->source_url : '');
+                if ('' !== $size_url && isset($size->width) && is_numeric($size->width) && $size->width > 0) {
+                    $candidates[(int) $size->width] = $size_url;
                 }
             }
         }
         // Include the original image as the top candidate when its width is known.
-        if (!empty($media->source_url) && !empty($media->media_details->width)) {
-            $candidates[(int) $media->media_details->width] = $media->source_url;
+        if ('' !== $media_url && isset($media->media_details->width) && is_numeric($media->media_details->width) && $media->media_details->width > 0) {
+            $candidates[(int) $media->media_details->width] = $media_url;
         }
 
         if (!empty($candidates)) {
@@ -446,8 +512,8 @@ function render_single_post($remote_post, $excerpt_length) {
             if (count($srcset_parts) > 1) {
                 $thumb_srcset = implode(', ', $srcset_parts);
             }
-        } elseif (!empty($media->source_url)) {
-            $thumb_url = esc_url($media->source_url);
+        } elseif ('' !== $media_url) {
+            $thumb_url = esc_url($media_url);
         }
     }
 
@@ -458,29 +524,35 @@ function render_single_post($remote_post, $excerpt_length) {
     // Author information
     $author_name = __('Unknown Author', 'restpostsembedder');
     $author_name_url = '';
-    if (!empty($remote_post->author) && isset($remote_post->_embedded->author[0])) {
+    if (
+        !empty($remote_post->author)
+        && isset($remote_post->_embedded->author)
+        && is_array($remote_post->_embedded->author)
+        && isset($remote_post->_embedded->author[0])
+        && is_object($remote_post->_embedded->author[0])
+    ) {
         $author = $remote_post->_embedded->author[0];
-        if (!empty($author->name)) {
-            $author_name = esc_html($author->name);
+        $remote_author_name = feed_string(isset($author->name) ? $author->name : '');
+        if ('' !== $remote_author_name) {
+            $author_name = esc_html($remote_author_name);
         }
         // Author archive URL lives in ->link; ->source_url only exists on media
         // objects (that, plus the missing _embed, caused the empty author link).
-        if (!empty($author->link)) {
-            $author_name_url = esc_url($author->link);
-        }
+        $author_name_url = esc_url(feed_string(isset($author->link) ? $author->link : ''));
     }
 
     // Excerpt. When an excerpt length is set, truncate the remote excerpt to
     // that many characters on a word boundary. 0 = render as-is.
     $excerpt = '';
-    if (isset($remote_post->excerpt->rendered)) {
+    $remote_excerpt = feed_string(isset($remote_post->excerpt->rendered) ? $remote_post->excerpt->rendered : '');
+    if ('' !== $remote_excerpt) {
         if ($excerpt_length > 0) {
-            $trimmed = truncate_excerpt($remote_post->excerpt->rendered, $excerpt_length);
+            $trimmed = truncate_excerpt($remote_excerpt, $excerpt_length);
             if ('' !== $trimmed) {
                 $excerpt = '<p>' . esc_html($trimmed) . '</p>';
             }
         } else {
-            $excerpt = wp_kses_post($remote_post->excerpt->rendered);
+            $excerpt = wp_kses_post($remote_excerpt);
         }
     }
 
@@ -489,15 +561,20 @@ function render_single_post($remote_post, $excerpt_length) {
         ? '<a href="' . $author_name_url . '" target="_blank" rel="noopener noreferrer">' . $author_name . '</a>'
         : $author_name;
 
+    if ('' !== $fordate) {
+        /* translators: 1: date the post was last modified, 2: author name. */
+        $byline = sprintf(__('%1$s, by %2$s', 'restpostsembedder'), esc_html($fordate), $author_html);
+    } else {
+        /* translators: %s: author name. */
+        $byline = sprintf(__('by %s', 'restpostsembedder'), $author_html);
+    }
+
     // Build individual post HTML (article only, no wrappers)
     $post_html = '<article class="embed-posts">
                     <a href="' . $link . '" target="_blank" rel="noopener noreferrer">
                         <h3>' . $title . '</h3>
                     </a>
-                    <small>' . sprintf(__('%1$s, by %2$s', 'restpostsembedder'),
-                        $fordate,
-                        $author_html) .
-                    '</small>
+                    <small>' . $byline . '</small>
                     <div class="embed-post-content">
                         ' . ($thumb_url ? '<a href="' . $link . '" target="_blank" rel="noopener noreferrer"><img src="' . $thumb_url . '"' . ($thumb_srcset ? ' srcset="' . $thumb_srcset . '" sizes="' . esc_attr($thumb_sizes) . '"' : '') . ' alt="' . esc_attr($title) . '" loading="lazy" /></a>' : '') . '
                         ' . $excerpt . '
@@ -726,8 +803,9 @@ function display_posts_enqueue_styles() {
         grid-template-columns: repeat({$columns_desktop}, 1fr);
     }
 
-    /* Hide images on desktop if disabled */
-    " . (!$show_images_desktop ? ".embed-posts img { display: none; }" : "") . "
+    /* Hide images on desktop if disabled. Scoped to desktop widths: an
+       unqualified rule would also hide them on mobile. */
+    " . (!$show_images_desktop ? "@media only screen and (min-width: 769px) { .embed-posts img { display: none; } }" : "") . "
 
     /* Mobile styles */
     @media only screen and (max-width: 768px) {
