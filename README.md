@@ -35,6 +35,7 @@ To show a single category or tag, add it to the endpoint, for example `?categori
 | `endpoint`       | REST API endpoint URL, for use without a source.                            |
 | `count`          | Posts per batch (1 to 20). Each "Load More" click loads another batch.      |
 | `excerpt_length` | Excerpt length in characters. `0` shows the full excerpt. Default `200`.    |
+| `excerpt_words`  | Excerpt length in words (1 to 200). Wins over `excerpt_length`.            |
 | `layout`         | Card layout: `classic` or `grid`. Default: the source's layout, then the site's. |
 | `columns`        | Columns on desktop (1 to 5). Default: the Styling setting.                  |
 | `columns_tablet` | Columns on tablets (1 to 5), for layouts with a tablet step such as Grid. Default: the smaller of `columns` and 2. |
@@ -48,6 +49,10 @@ When `source` is set, the source's endpoint and post count are used and the `end
 ### Posts from this site
 
 `[posts_embedder source="this-site"]` shows this site's own published posts, read from its database instead of a REST API. It works with every layout, the column attributes and Load More, and accepts `category`, `tag`, `orderby`, `order` and `offset`. It is not cached, so a new post shows at once. Cards show the publication date, and links open in the same tab. On a multilingual site (WC Multilang, Polylang) each language shows its own posts, on the page and in Load More.
+
+### ProWoos Posts Grid shortcode
+
+The ProWoos Posts Grid plugin is merged into this one. `[prowoos_posts_grid]` keeps working: it shows a `source="this-site"` feed in the Grid layout, with `posts`, `columns`, `columns_tablet`, `category`, `excerpt_length` (in words), `orderby`, `order` and `offset` as before. `show_date`, `show_excerpt`, `show_readmore` and `readmore_text` are not supported. While ProWoos Posts Grid is still active, its own shortcode is used; deactivate it afterwards.
 
 ### Layouts
 

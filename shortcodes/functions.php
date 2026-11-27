@@ -68,6 +68,46 @@ function truncate_excerpt($html, $length) {
 }
 
 /**
+ * Keep an excerpt word count within 0 (not used) and 200.
+ *
+ * @since 3.10.0
+ * @param mixed $value Raw value.
+ * @return int
+ */
+function sanitize_excerpt_words($value) {
+    return is_scalar($value) ? min(200, absint($value)) : 0;
+}
+
+/**
+ * Shorten an excerpt for a card.
+ *
+ * A word count wins over a character count. With neither, the excerpt is
+ * kept whole, with its safe HTML.
+ *
+ * @since 3.10.0
+ * @param string $html           Rendered excerpt HTML.
+ * @param int    $excerpt_length Maximum characters (0 = no limit).
+ * @param int    $excerpt_words  Maximum words (0 = not used).
+ * @return string Excerpt HTML, or '' when there is none.
+ */
+function format_excerpt($html, $excerpt_length, $excerpt_words = 0) {
+    if ('' === trim(wp_strip_all_tags($html))) {
+        return '';
+    }
+    if ($excerpt_words > 0) {
+        $plain = html_entity_decode(wp_strip_all_tags($html), ENT_QUOTES, 'UTF-8');
+        // wp_trim_words() counts characters instead in languages written
+        // without spaces, as its translators decide.
+        $trimmed = wp_trim_words($plain, $excerpt_words, '…');
+    } elseif ($excerpt_length > 0) {
+        $trimmed = truncate_excerpt($html, $excerpt_length);
+    } else {
+        return wp_kses_post($html);
+    }
+    return '' !== $trimmed ? '<p>' . esc_html($trimmed) . '</p>' : '';
+}
+
+/**
  * Find the stored ID of a feed source from an ID as it was requested.
  *
  * Sources are stored under the ID generated when they were created. Up to
@@ -182,6 +222,8 @@ function rest_posts_embedder($atts = array()) {
         // Per-feed excerpt length in characters. Empty string means "fall back
         // to the source value, then the global default".
         'excerpt_length' => '',
+        // Excerpt length in words (since 3.10.0). Wins over excerpt_length.
+        'excerpt_words' => '',
         // Card layout ID. Empty means the source's layout, then the site's.
         'layout' => '',
         // Columns on desktop and on tablets. Empty means the Styling settings.
@@ -264,6 +306,7 @@ function rest_posts_embedder($atts = array()) {
         $excerpt_length = sanitize_excerpt_length($atts['excerpt_length']);
     }
 
+    $excerpt_words = sanitize_excerpt_words($atts['excerpt_words']);
     $layout = resolve_layout($atts['layout'], $source_layout);
     $columns_style = columns_style($atts['columns'], $atts['columns_tablet']);
 
@@ -299,7 +342,7 @@ function rest_posts_embedder($atts = array()) {
     );
 
     if ($is_local) {
-        return render_local_feed(sanitize_local_query($atts), $count, $excerpt_length, $layout, $columns_style, $atts);
+        return render_local_feed(sanitize_local_query($atts), $count, $excerpt_length, $layout, $columns_style, $atts, $excerpt_words);
     }
 
     // Check if endpoint is valid
@@ -322,7 +365,7 @@ function rest_posts_embedder($atts = array()) {
     // source and a plain endpoint must not share each other's button. So is
     // the layout, which decides all of the markup.
     $locale    = determine_locale();
-    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length . '_' . $locale . '_' . $bound_source . '_' . $bound_revision . '_' . $layout . ('' !== $columns_style ? '_' . $columns_style : ''));
+    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length . '_' . $locale . '_' . $bound_source . '_' . $bound_revision . '_' . $layout . ('' !== $columns_style ? '_' . $columns_style : '') . ($excerpt_words > 0 ? '_w' . $excerpt_words : ''));
 
     // Try to get cached posts
     $cached_posts = get_transient($cache_key);
@@ -354,14 +397,14 @@ function rest_posts_embedder($atts = array()) {
     // Render the grid.
     $allposts  = '<div class="embed-posts-container embed-posts-layout-' . esc_attr($layout) . '">';
     $allposts .= '<div class="embed-posts-wrapper"' . ('' !== $columns_style ? ' style="' . esc_attr($columns_style) . '"' : '') . '>';
-    $allposts .= render_articles($remote_posts, $excerpt_length, $layout);
+    $allposts .= render_articles($remote_posts, $excerpt_length, $layout, $excerpt_words);
     $allposts .= '</div>'; // Close embed-posts-wrapper
 
     // Append the Load More button when more pages are available. A server-side
     // token maps back to the endpoint/count/excerpt so the AJAX handler never
     // receives a client-supplied URL.
     if ($fetch['total_pages'] > 1) {
-        $allposts .= render_load_more_button($endpoint, $count, $excerpt_length, $fetch['total_pages'], $locale, $bound_source, $bound_revision, $layout);
+        $allposts .= render_load_more_button($endpoint, $count, $excerpt_length, $fetch['total_pages'], $locale, $bound_source, $bound_revision, $layout, $excerpt_words);
     }
 
     $allposts .= '</div>'; // Close embed-posts-container
@@ -673,9 +716,10 @@ function is_load_more_context_current($context) {
  * @param array  $remote_posts   Decoded remote post objects.
  * @param int    $excerpt_length Excerpt length in characters (0 = unlimited).
  * @param string $layout         Layout ID (since 3.10.0).
+ * @param int    $excerpt_words  Excerpt length in words, 0 = not used (since 3.10.0).
  * @return string Concatenated <article> HTML.
  */
-function render_articles($remote_posts, $excerpt_length, $layout = DEFAULT_LAYOUT) {
+function render_articles($remote_posts, $excerpt_length, $layout = DEFAULT_LAYOUT, $excerpt_words = 0) {
     $html = '';
     foreach ($remote_posts as $remote_post) {
         // A feed item that is not a post object cannot be rendered; skip it
@@ -683,7 +727,7 @@ function render_articles($remote_posts, $excerpt_length, $layout = DEFAULT_LAYOU
         if (!is_object($remote_post)) {
             continue;
         }
-        $html .= render_single_post($remote_post, $excerpt_length, $layout);
+        $html .= render_single_post($remote_post, $excerpt_length, $layout, $excerpt_words);
     }
     return $html;
 }
@@ -737,12 +781,13 @@ function feed_gmt_timestamp($gmt_date) {
  * @param object $remote_post    Decoded remote post object.
  * @param int    $excerpt_length Excerpt length in characters (0 = unlimited).
  * @param string $layout         Layout ID (since 3.10.0).
+ * @param int    $excerpt_words  Excerpt length in words, 0 = not used (since 3.10.0).
  * @return string The post HTML.
  */
-function render_single_post($remote_post, $excerpt_length, $layout = DEFAULT_LAYOUT) {
+function render_single_post($remote_post, $excerpt_length, $layout = DEFAULT_LAYOUT, $excerpt_words = 0) {
     $card = $remote_post instanceof \WP_Post
-        ? prepare_local_card($remote_post, $excerpt_length)
-        : prepare_card($remote_post, $excerpt_length);
+        ? prepare_local_card($remote_post, $excerpt_length, $excerpt_words)
+        : prepare_card($remote_post, $excerpt_length, $excerpt_words);
     $post_html = render_card($card, $layout);
 
     /**
@@ -787,9 +832,10 @@ function render_single_post($remote_post, $excerpt_length, $layout = DEFAULT_LAY
  * @since 3.10.0
  * @param object $remote_post    Decoded remote post object.
  * @param int    $excerpt_length Excerpt length in characters (0 = unlimited).
+ * @param int    $excerpt_words  Excerpt length in words (0 = not used).
  * @return array
  */
-function prepare_card($remote_post, $excerpt_length) {
+function prepare_card($remote_post, $excerpt_length, $excerpt_words = 0) {
     // Safely extract post data
     $title = feed_string(isset($remote_post->title->rendered) ? $remote_post->title->rendered : '');
     $title = '' !== $title ? esc_html($title) : __('Untitled', 'restpostsembedder');
@@ -884,20 +930,8 @@ function prepare_card($remote_post, $excerpt_length) {
         $author_name_url = esc_url(feed_string(isset($author->link) ? $author->link : ''));
     }
 
-    // Excerpt. When an excerpt length is set, truncate the remote excerpt to
-    // that many characters on a word boundary. 0 = render as-is.
-    $excerpt = '';
-    $remote_excerpt = feed_string(isset($remote_post->excerpt->rendered) ? $remote_post->excerpt->rendered : '');
-    if ('' !== $remote_excerpt) {
-        if ($excerpt_length > 0) {
-            $trimmed = truncate_excerpt($remote_excerpt, $excerpt_length);
-            if ('' !== $trimmed) {
-                $excerpt = '<p>' . esc_html($trimmed) . '</p>';
-            }
-        } else {
-            $excerpt = wp_kses_post($remote_excerpt);
-        }
-    }
+    // Excerpt, shortened to the feed's length.
+    $excerpt = format_excerpt(feed_string(isset($remote_post->excerpt->rendered) ? $remote_post->excerpt->rendered : ''), $excerpt_length, $excerpt_words);
 
     // Link the author name only when an archive URL is available.
     $author_html = $author_name_url
@@ -951,13 +985,14 @@ function prepare_card($remote_post, $excerpt_length) {
  *                               a feed that is not a named source).
  * @param string $revision       source_revision() of that source.
  * @param string $layout         Layout ID the feed is rendered with (since 3.10.0).
+ * @param int    $excerpt_words  Excerpt length in words, 0 = not used (since 3.10.0).
  * @return string Button HTML.
  */
-function render_load_more_button($endpoint, $count, $excerpt_length, $total_pages, $locale = '', $source = '', $revision = '', $layout = DEFAULT_LAYOUT) {
+function render_load_more_button($endpoint, $count, $excerpt_length, $total_pages, $locale = '', $source = '', $revision = '', $layout = DEFAULT_LAYOUT, $excerpt_words = 0) {
     // Classic feeds keep the token and context of 3.9.0, so buttons on pages
     // cached before the update keep their stored context.
     $classic = DEFAULT_LAYOUT === $layout;
-    $token   = md5('v3_' . $source . '|' . $revision . '|' . $endpoint . '|' . $count . '|' . $excerpt_length . ($classic ? '' : '|' . $layout));
+    $token   = md5('v3_' . $source . '|' . $revision . '|' . $endpoint . '|' . $count . '|' . $excerpt_length . ($classic ? '' : '|' . $layout) . ($excerpt_words > 0 ? '|w' . $excerpt_words : ''));
 
     // Persist the token -> context mapping as a non-autoloaded option rather
     // than a transient. Page caches can serve this button for days or weeks,
@@ -975,6 +1010,9 @@ function render_load_more_button($endpoint, $count, $excerpt_length, $total_page
     );
     if (!$classic) {
         $context['layout'] = $layout;
+    }
+    if ($excerpt_words > 0) {
+        $context['excerpt_words'] = $excerpt_words;
     }
     $option = 'rest_posts_embedder_lm_' . $token;
     if (get_option($option) !== $context) {
@@ -1106,6 +1144,7 @@ function rest_posts_embedder_load_more() {
     $count          = absint($context['count']);
     $count          = ($count > 0 && $count <= REST_POSTS_EMBEDDER_MAX_COUNT) ? $count : REST_POSTS_EMBEDDER_DEFAULT_COUNT;
     $excerpt_length = isset($context['excerpt_length']) ? sanitize_excerpt_length($context['excerpt_length']) : 0;
+    $excerpt_words  = isset($context['excerpt_words']) ? sanitize_excerpt_words($context['excerpt_words']) : 0;
     // Contexts without a layout were rendered as Classic. One whose layout was
     // unregistered since gets the site's default.
     $layout         = resolve_layout(isset($context['layout']) ? $context['layout'] : DEFAULT_LAYOUT);
@@ -1130,7 +1169,7 @@ function rest_posts_embedder_load_more() {
 
     // Cache each rendered page so repeated clicks don't re-hit the remote. The
     // HTML holds translated text, so the locale is part of the key.
-    $page_cache_key = 'rest_posts_embedder_p_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '|' . $endpoint . '|' . $count . '|' . $excerpt_length . '|' . $page . '|' . $locale . '|' . $layout);
+    $page_cache_key = 'rest_posts_embedder_p_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '|' . $endpoint . '|' . $count . '|' . $excerpt_length . '|' . $page . '|' . $locale . '|' . $layout . '|' . $excerpt_words);
     $cached = get_transient($page_cache_key);
     if (false !== $cached) {
         wp_send_json_success($cached);
@@ -1138,7 +1177,7 @@ function rest_posts_embedder_load_more() {
 
     // Fetch and render in the page's locale, so error messages, dates and
     // "Read more..." match the posts already on the page.
-    $result = with_locale($locale, function () use ($endpoint, $count, $page, $excerpt_length, $layout) {
+    $result = with_locale($locale, function () use ($endpoint, $count, $page, $excerpt_length, $layout, $excerpt_words) {
         $fetch = fetch_posts_page($endpoint, $count, $page);
         // The feed shrank since its page count was stored: the remote answers
         // 400 (rest_post_invalid_page_number) or an empty list. That is the end
@@ -1157,7 +1196,7 @@ function rest_posts_embedder_load_more() {
         remember_page_bound($endpoint, $count, $fetch['total_pages'], \RestPostsEmbedder\Admin\get_cache_expiration());
         return array(
             'payload' => array(
-                'html'     => render_articles($fetch['posts'], $excerpt_length, $layout),
+                'html'     => render_articles($fetch['posts'], $excerpt_length, $layout, $excerpt_words),
                 'has_more' => ($fetch['total_pages'] > 0 && $page < $fetch['total_pages']),
             ),
             'cache'   => \RestPostsEmbedder\Admin\get_cache_expiration(),

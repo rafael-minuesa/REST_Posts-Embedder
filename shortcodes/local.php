@@ -177,13 +177,14 @@ function carried_query_vars($wp_query, $args) {
  * @param \WP_Post[] $posts          Posts.
  * @param int        $excerpt_length Excerpt length in characters (0 = unlimited).
  * @param string     $layout         Layout ID.
+ * @param int        $excerpt_words  Excerpt length in words (0 = not used).
  * @return string
  */
-function render_local_articles($posts, $excerpt_length, $layout) {
+function render_local_articles($posts, $excerpt_length, $layout, $excerpt_words = 0) {
     global $post;
     $previous = $post;
     try {
-        return render_articles($posts, $excerpt_length, $layout);
+        return render_articles($posts, $excerpt_length, $layout, $excerpt_words);
     } finally {
         $post = $previous; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
         if ($previous instanceof \WP_Post) {
@@ -197,15 +198,16 @@ function render_local_articles($posts, $excerpt_length, $layout) {
 /**
  * Card data of one of this site's posts. Same keys as prepare_card().
  *
- * Shows the publication date, where remote cards show the date of the last
- * change, and links open in the same tab.
+ * Shows the publication date in the site's date format, where remote cards
+ * show the date of the last change, and links open in the same tab.
  *
  * @since 3.10.0
  * @param \WP_Post $local_post     Post.
  * @param int      $excerpt_length Excerpt length in characters (0 = unlimited).
+ * @param int      $excerpt_words  Excerpt length in words (0 = not used).
  * @return array
  */
-function prepare_local_card($local_post, $excerpt_length) {
+function prepare_local_card($local_post, $excerpt_length, $excerpt_words = 0) {
     global $post;
     $post = $local_post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
     setup_postdata($local_post);
@@ -214,7 +216,8 @@ function prepare_local_card($local_post, $excerpt_length) {
     $title = '' !== $title ? esc_html(wp_strip_all_tags($title)) : esc_html__('Untitled', 'restpostsembedder');
     $link  = esc_url(get_permalink($local_post));
 
-    $date_format = _x('jS \of F Y', 'embedded post date format', 'restpostsembedder');
+    // This site's own date format, as its theme shows the date.
+    $date_format = (string) get_option('date_format');
     $timestamp   = feed_gmt_timestamp(str_replace(' ', 'T', (string) $local_post->post_date_gmt));
     $fordate     = false !== $timestamp ? (string) wp_date($date_format, $timestamp) : '';
 
@@ -247,18 +250,7 @@ function prepare_local_card($local_post, $excerpt_length) {
 
     // The excerpt as the REST API renders it, then the same truncation as a
     // remote excerpt.
-    $excerpt  = '';
-    $rendered = (string) apply_filters('the_excerpt', get_the_excerpt($local_post));
-    if ('' !== trim($rendered)) {
-        if ($excerpt_length > 0) {
-            $trimmed = truncate_excerpt($rendered, $excerpt_length);
-            if ('' !== $trimmed) {
-                $excerpt = '<p>' . esc_html($trimmed) . '</p>';
-            }
-        } else {
-            $excerpt = wp_kses_post($rendered);
-        }
-    }
+    $excerpt = format_excerpt((string) apply_filters('the_excerpt', get_the_excerpt($local_post)), $excerpt_length, $excerpt_words);
 
     return array(
         'title'        => $title,
@@ -291,9 +283,10 @@ function prepare_local_card($local_post, $excerpt_length) {
  * @param string $layout         Layout ID.
  * @param string $columns_style  Inline column style ('' for none).
  * @param array  $atts           Shortcode attributes, for the output filter.
+ * @param int    $excerpt_words  Excerpt length in words (0 = not used).
  * @return string
  */
-function render_local_feed($query, $count, $excerpt_length, $layout, $columns_style, $atts) {
+function render_local_feed($query, $count, $excerpt_length, $layout, $columns_style, $atts, $excerpt_words = 0) {
     $fetch = fetch_local_posts($query, $count, 1);
     if (empty($fetch['posts'])) {
         return '<p>' . esc_html__('No posts found.', 'restpostsembedder') . '</p>';
@@ -301,10 +294,10 @@ function render_local_feed($query, $count, $excerpt_length, $layout, $columns_st
 
     $html  = '<div class="embed-posts-container embed-posts-layout-' . esc_attr($layout) . '">';
     $html .= '<div class="embed-posts-wrapper"' . ('' !== $columns_style ? ' style="' . esc_attr($columns_style) . '"' : '') . '>';
-    $html .= render_local_articles($fetch['posts'], $excerpt_length, $layout);
+    $html .= render_local_articles($fetch['posts'], $excerpt_length, $layout, $excerpt_words);
     $html .= '</div>';
     if ($fetch['total_pages'] > 1) {
-        $html .= render_local_load_more_button($query, $count, $excerpt_length, $fetch['total_pages'], determine_locale(), $layout, $fetch['carried']);
+        $html .= render_local_load_more_button($query, $count, $excerpt_length, $fetch['total_pages'], determine_locale(), $layout, $fetch['carried'], $excerpt_words);
     }
     $html .= '</div>';
 
@@ -324,9 +317,10 @@ function render_local_feed($query, $count, $excerpt_length, $layout, $columns_st
  * @param string $locale         Locale the page was rendered in.
  * @param string $layout         Layout ID.
  * @param array  $carried        Query vars to apply again, see carried_query_vars().
+ * @param int    $excerpt_words  Excerpt length in words (0 = not used).
  * @return string Button HTML.
  */
-function render_local_load_more_button($query, $count, $excerpt_length, $total_pages, $locale, $layout, $carried = array()) {
+function render_local_load_more_button($query, $count, $excerpt_length, $total_pages, $locale, $layout, $carried = array(), $excerpt_words = 0) {
     // The carried vars differ per language, so each language gets its own token.
     $context = array(
         'local'          => $query,
@@ -334,6 +328,7 @@ function render_local_load_more_button($query, $count, $excerpt_length, $total_p
         'excerpt_length' => $excerpt_length,
         'layout'         => $layout,
         'carried'        => $carried,
+        'excerpt_words'  => $excerpt_words,
     );
     $token  = md5('v3_local|' . wp_json_encode($context));
     $option = 'rest_posts_embedder_lm_' . $token;
@@ -357,17 +352,18 @@ function load_more_local($context, $page, $locale) {
     $count          = absint($context['count']);
     $count          = ($count > 0 && $count <= REST_POSTS_EMBEDDER_MAX_COUNT) ? $count : REST_POSTS_EMBEDDER_DEFAULT_COUNT;
     $excerpt_length = isset($context['excerpt_length']) ? sanitize_excerpt_length($context['excerpt_length']) : 0;
+    $excerpt_words  = isset($context['excerpt_words']) ? sanitize_excerpt_words($context['excerpt_words']) : 0;
     $layout         = resolve_layout(isset($context['layout']) ? $context['layout'] : DEFAULT_LAYOUT);
     // Written by the server when the button was rendered, never by a request.
     $carried        = (isset($context['carried']) && is_array($context['carried'])) ? $context['carried'] : array();
 
-    return with_locale($locale, function () use ($query, $count, $page, $excerpt_length, $layout, $carried) {
+    return with_locale($locale, function () use ($query, $count, $page, $excerpt_length, $layout, $carried, $excerpt_words) {
         $fetch = fetch_local_posts($query, $count, $page, $carried);
         if (empty($fetch['posts'])) {
             return array('html' => '', 'has_more' => false);
         }
         return array(
-            'html'     => render_local_articles($fetch['posts'], $excerpt_length, $layout),
+            'html'     => render_local_articles($fetch['posts'], $excerpt_length, $layout, $excerpt_words),
             'has_more' => $page < $fetch['total_pages'],
         );
     });
