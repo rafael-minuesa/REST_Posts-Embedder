@@ -54,6 +54,8 @@ To show a single category or tag, add it to the endpoint, for example `https://e
 
 `[prowoos_posts_grid]`, the shortcode of the merged ProWoos Posts Grid plugin, keeps working as a "This site" feed in the Grid layout.
 
+In the block editor, the Posts Grid block offers the same options in its sidebar, with a live preview.
+
 When `source` is set, the source's endpoint and post count are used and the `endpoint` and `count` attributes are ignored. `excerpt_length` and `layout` still override the source settings.
 
 == Installation ==

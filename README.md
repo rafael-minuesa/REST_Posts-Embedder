@@ -46,6 +46,10 @@ To show a single category or tag, add it to the endpoint, for example `?categori
 
 When `source` is set, the source's endpoint and post count are used and the `endpoint` and `count` attributes are ignored. `excerpt_length` and `layout` still override the source settings.
 
+### Block editor
+
+The **Posts Grid** block (Widgets category) does the same as the shortcode, with settings in the sidebar: source (this site or a feed source), number of posts, category and order for this site's posts, layout, columns, and excerpt length in words or characters. It is rendered by the server like the shortcode, and the editor shows a live preview. It needs no build step and works with WordPress 5.3 and later.
+
 ### Posts from this site
 
 `[posts_embedder source="this-site"]` shows this site's own published posts, read from its database instead of a REST API. It works with every layout, the column attributes and Load More, and accepts `category`, `tag`, `orderby`, `order` and `offset`. It is not cached, so a new post shows at once. Cards show the publication date, and links open in the same tab. On a multilingual site (WC Multilang, Polylang) each language shows its own posts, on the page and in Load More.

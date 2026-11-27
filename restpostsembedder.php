@@ -202,6 +202,9 @@ require plugin_dir_path( __FILE__ ) . 'shortcodes/functions.php';
 require plugin_dir_path( __FILE__ ) . 'shortcodes/local.php';
 require plugin_dir_path( __FILE__ ) . 'shortcodes/posts-grid-alias.php';
 
+// Block editor block
+require plugin_dir_path( __FILE__ ) . 'blocks/posts-grid.php';
+
 // Register shortcode
 add_shortcode( 'posts_embedder', 'RestPostsEmbedder\\Shortcodes\\rest_posts_embedder' );
 

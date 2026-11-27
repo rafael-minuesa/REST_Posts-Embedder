@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `excerpt_words` attribute: excerpt length in words, for any feed.
 - `[prowoos_posts_grid]` from the merged ProWoos Posts Grid plugin: a "This site" feed in the Grid layout with the same attributes (excerpt length in words). Registered only while ProWoos Posts Grid itself is inactive.
 - "This site" cards show the date in the site's own date format.
+- Posts Grid block for the block editor: source, number of posts, category and order, layout, columns and excerpt length in the sidebar, live preview, server-rendered through the shortcode code. Plain JavaScript, no build step.
 - `rest_posts_embedder_layouts` filter to register more layouts as template files, and a `$layout` argument on `rest_posts_embedder_post_html`.
 
 ## [3.9.0] - 2026-11-27
