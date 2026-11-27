@@ -274,6 +274,13 @@ class LocalFeedTest extends WP_Ajax_UnitTestCase {
         $this->assertStringNotContainsString('embed-posts-load-more', do_shortcode('[posts_embedder source="this-site" count="5"]'));
     }
 
+    public function test_load_more_no_hides_the_button() {
+        $this->assertStringContainsString('embed-posts-load-more', do_shortcode('[posts_embedder source="this-site" count="1"]'));
+        $html = do_shortcode('[posts_embedder source="this-site" count="1" load_more="no"]');
+        $this->assertStringNotContainsString('embed-posts-load-more', $html);
+        $this->assertCount(1, $this->titles($html));
+    }
+
     public function test_rendering_restores_the_global_post() {
         global $post;
         $page = self::factory()->post->create_and_get(array('post_type' => 'page', 'post_title' => 'Host page'));

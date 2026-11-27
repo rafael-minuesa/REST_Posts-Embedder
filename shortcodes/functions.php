@@ -79,6 +79,21 @@ function sanitize_excerpt_words($value) {
 }
 
 /**
+ * Whether a feed shows its Load More button. Empty (the default) means yes;
+ * "no", "false", "off" and "0" turn it off.
+ *
+ * @since 3.10.0
+ * @param mixed $value The load_more attribute.
+ * @return bool
+ */
+function load_more_enabled($value) {
+    if (!is_scalar($value)) {
+        return true;
+    }
+    return !in_array(strtolower(trim((string) $value)), array('no', 'false', 'off', '0'), true);
+}
+
+/**
  * Shorten an excerpt for a card.
  *
  * A word count wins over a character count. With neither, the excerpt is
@@ -235,6 +250,8 @@ function rest_posts_embedder($atts = array()) {
         'orderby' => '',
         'order' => '',
         'offset' => '',
+        // "no" hides the Load More button. Empty means shown.
+        'load_more' => '',
     ), $atts, 'posts_embedder');
 
     // A feed of this site's own posts (source="this-site").
@@ -309,6 +326,7 @@ function rest_posts_embedder($atts = array()) {
     $excerpt_words = sanitize_excerpt_words($atts['excerpt_words']);
     $layout = resolve_layout($atts['layout'], $source_layout);
     $columns_style = columns_style($atts['columns'], $atts['columns_tablet']);
+    $load_more = load_more_enabled($atts['load_more']);
 
     /**
      * Filter the sanitized endpoint URL before making the API request.
@@ -342,7 +360,7 @@ function rest_posts_embedder($atts = array()) {
     );
 
     if ($is_local) {
-        return render_local_feed(sanitize_local_query($atts), $count, $excerpt_length, $layout, $columns_style, $atts, $excerpt_words);
+        return render_local_feed(sanitize_local_query($atts), $count, $excerpt_length, $layout, $columns_style, $atts, $excerpt_words, $load_more);
     }
 
     // Check if endpoint is valid
@@ -365,7 +383,7 @@ function rest_posts_embedder($atts = array()) {
     // source and a plain endpoint must not share each other's button. So is
     // the layout, which decides all of the markup.
     $locale    = determine_locale();
-    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length . '_' . $locale . '_' . $bound_source . '_' . $bound_revision . '_' . $layout . ('' !== $columns_style ? '_' . $columns_style : '') . ($excerpt_words > 0 ? '_w' . $excerpt_words : ''));
+    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length . '_' . $locale . '_' . $bound_source . '_' . $bound_revision . '_' . $layout . ('' !== $columns_style ? '_' . $columns_style : '') . ($excerpt_words > 0 ? '_w' . $excerpt_words : '') . ($load_more ? '' : '_nolm'));
 
     // Try to get cached posts
     $cached_posts = get_transient($cache_key);
@@ -403,7 +421,7 @@ function rest_posts_embedder($atts = array()) {
     // Append the Load More button when more pages are available. A server-side
     // token maps back to the endpoint/count/excerpt so the AJAX handler never
     // receives a client-supplied URL.
-    if ($fetch['total_pages'] > 1) {
+    if ($load_more && $fetch['total_pages'] > 1) {
         $allposts .= render_load_more_button($endpoint, $count, $excerpt_length, $fetch['total_pages'], $locale, $bound_source, $bound_revision, $layout, $excerpt_words);
     }
 

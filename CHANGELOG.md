@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `columns` and `columns_tablet` shortcode attributes, for any layout. The Styling tab's column settings stay the defaults.
 - Posts from this site: `[posts_embedder source="this-site"]` reads the site's own published posts with WP_Query, with every layout and Load More. It accepts `category`, `tag`, `orderby`, `order` and `offset`, and it is not cached. On multilingual sites Load More keeps the page's language. New filters `rest_posts_embedder_local_query_args` and `rest_posts_embedder_local_carried_query_vars`.
 - `excerpt_words` attribute: excerpt length in words, for any feed.
-- `[prowoos_posts_grid]` from the merged ProWoos Posts Grid plugin: a "This site" feed in the Grid layout with the same attributes (excerpt length in words). Registered only while ProWoos Posts Grid itself is inactive.
+- `[prowoos_posts_grid]` from the merged ProWoos Posts Grid plugin: a "This site" feed in the Grid layout with the same attributes (excerpt length in words). No Load More button unless `load_more="yes"`, as in ProWoos Posts Grid. Registered only while ProWoos Posts Grid itself is inactive.
+- `load_more="no"` shortcode attribute and a block setting to hide the Load More button.
 - "This site" cards show the date in the site's own date format.
 - Posts Grid block for the block editor: source, number of posts, category and order, layout, columns and excerpt length in the sidebar, live preview, server-rendered through the shortcode code. Plain JavaScript, no build step.
 - `rest_posts_embedder_layouts` filter to register more layouts as template files, and a `$layout` argument on `rest_posts_embedder_post_html`.

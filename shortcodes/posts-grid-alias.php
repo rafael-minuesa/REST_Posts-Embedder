@@ -20,7 +20,9 @@ if (!defined('ABSPATH')) {
  * Render [prowoos_posts_grid] as a posts_embedder feed.
  *
  * Supported: posts, columns, columns_tablet, category, excerpt_length (words,
- * as in ProWoos Posts Grid), orderby, order and offset. Not supported, and
+ * as in ProWoos Posts Grid), orderby, order and offset, plus load_more. The
+ * Load More button is off unless load_more="yes", since ProWoos Posts Grid
+ * had none. Not supported, and
  * ignored: show_date, show_excerpt, show_readmore and readmore_text.
  *
  * @since 3.10.0
@@ -37,6 +39,7 @@ function posts_grid_alias($atts = array()) {
         'orderby'        => 'date',
         'order'          => 'DESC',
         'offset'         => 0,
+        'load_more'      => 'no',
     ), $atts, 'prowoos_posts_grid');
 
     $posts = absint($atts['posts']);
@@ -54,6 +57,7 @@ function posts_grid_alias($atts = array()) {
         'orderby'        => $atts['orderby'],
         'order'          => $atts['order'],
         'offset'         => $atts['offset'],
+        'load_more'      => load_more_enabled($atts['load_more']) ? 'yes' : 'no',
     ));
 }
 

@@ -56,6 +56,11 @@ class BlockTest extends WP_UnitTestCase {
         $this->assertStringContainsString('<p>one two three…</p>', $block);
     }
 
+    public function test_load_more_toggle() {
+        $this->assertStringContainsString('embed-posts-load-more', do_blocks('<!-- wp:restpostsembedder/posts-grid {"count":2} /-->'));
+        $this->assertStringNotContainsString('embed-posts-load-more', do_blocks('<!-- wp:restpostsembedder/posts-grid {"count":2,"loadMore":false} /-->'));
+    }
+
     public function test_wrapper_keeps_alignment_and_custom_class() {
         $html = do_blocks('<!-- wp:restpostsembedder/posts-grid {"align":"wide","className":"my-grid"} /-->');
         $this->assertMatchesRegularExpression('/^<div class="wp-block-restpostsembedder-posts-grid[^"]*\balignwide\b[^"]*"|^<div class="[^"]*my-grid/', $html);
@@ -74,6 +79,8 @@ class BlockTest extends WP_UnitTestCase {
             'words' => array(array('excerptUnit' => 'words', 'excerptLength' => 18), array('source' => 'this-site', 'excerpt_words' => '18')),
             'characters, including 0 for the whole excerpt' => array(array('excerptUnit' => 'characters', 'excerptLength' => 0), array('source' => 'this-site', 'excerpt_length' => '0')),
             'columns' => array(array('columns' => 4, 'columnsTablet' => 2), array('source' => 'this-site', 'columns' => '4', 'columns_tablet' => '2')),
+            'Load More on' => array(array('loadMore' => true), array('source' => 'this-site')),
+            'Load More off' => array(array('loadMore' => false), array('source' => 'this-site', 'load_more' => 'no')),
             'stored source' => array(array('source' => 'my-feed', 'layout' => 'classic'), array('source' => 'my-feed', 'layout' => 'classic')),
             'non-scalar values are dropped' => array(array('source' => array('x'), 'count' => array(3), 'category' => array('news')), array('source' => 'this-site')),
         );

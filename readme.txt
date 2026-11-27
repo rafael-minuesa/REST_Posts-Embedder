@@ -52,7 +52,9 @@ To show a single category or tag, add it to the endpoint, for example `https://e
 
 `[posts_embedder source="this-site"]` shows this site's own published posts, with the same layouts and Load More button. It is not cached, so a new post shows at once.
 
-`[prowoos_posts_grid]`, the shortcode of the merged ProWoos Posts Grid plugin, keeps working as a "This site" feed in the Grid layout.
+`[prowoos_posts_grid]`, the shortcode of the merged ProWoos Posts Grid plugin, keeps working as a "This site" feed in the Grid layout, without a Load More button unless `load_more="yes"`.
+
+`load_more="no"` hides the Load More button of any feed.
 
 In the block editor, the Posts Grid block offers the same options in its sidebar, with a live preview.
 
