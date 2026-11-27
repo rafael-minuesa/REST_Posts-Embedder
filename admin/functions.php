@@ -26,6 +26,38 @@ function embed_posts_settings_page() {
 add_action('admin_menu', 'RestPostsEmbedder\\Admin\\embed_posts_settings_page');
 
 /**
+ * Generate the ID of a new feed source from its name.
+ *
+ * The ID is typed into shortcodes and travels through URLs and form fields,
+ * so it is limited to characters every one of those keeps unchanged: lowercase
+ * ASCII letters, digits, hyphens and underscores. sanitize_title() alone
+ * percent-encodes non-Latin names ("東京" becomes "%e6%9d%b1%e4%ba%ac"), and
+ * sanitize_key() then strips the percent signs when the ID is read back, so
+ * such a source could not be found again.
+ *
+ * @since 3.9.0
+ * @param string $name    Source name.
+ * @param array  $sources Existing sources, keyed by ID.
+ * @return string New, unused ID.
+ */
+function generate_source_id($name, $sources) {
+    $slug = preg_replace('/[^a-z0-9]+/', '-', strtolower(remove_accents((string) $name)));
+    $slug = substr(trim($slug, '-'), 0, 60);
+    if ('' === $slug) {
+        // Nothing usable in the name, e.g. one written entirely in CJK.
+        $slug = 'feed';
+    }
+
+    $base = $slug . '_' . time();
+    $source_id = $base;
+    // Two sources saved within the same second must not overwrite each other.
+    for ($i = 2; isset($sources[$source_id]); $i++) {
+        $source_id = $base . '-' . $i;
+    }
+    return $source_id;
+}
+
+/**
  * Handle source management actions (add, edit, delete).
  *
  * @since 3.0.0
@@ -44,8 +76,8 @@ function handle_source_actions() {
             return;
         }
 
-        $source_id = sanitize_key(wp_unslash($_POST['source_id']));
-        if (isset($sources[$source_id])) {
+        $source_id = \RestPostsEmbedder\Shortcodes\resolve_source_id($sources, sanitize_title(wp_unslash($_POST['source_id'])));
+        if ('' !== $source_id) {
             unset($sources[$source_id]);
             update_option('rest_posts_embedder_sources', $sources);
             add_settings_error(
@@ -63,7 +95,11 @@ function handle_source_actions() {
             return;
         }
 
-        $source_id = isset($_POST['source_id']) ? sanitize_key(wp_unslash($_POST['source_id'])) : '';
+        // Empty for a new source. An ID that matches no stored source is treated
+        // as new too, so a request cannot choose its own ID.
+        $source_id = isset($_POST['source_id'])
+            ? \RestPostsEmbedder\Shortcodes\resolve_source_id($sources, sanitize_title(wp_unslash($_POST['source_id'])))
+            : '';
         $source_name = isset($_POST['source_name']) ? sanitize_text_field(wp_unslash($_POST['source_name'])) : '';
         $source_endpoint = isset($_POST['source_endpoint']) ? esc_url_raw(wp_unslash($_POST['source_endpoint']), array('http', 'https')) : '';
         $source_count = isset($_POST['source_count']) ? absint(wp_unslash($_POST['source_count'])) : REST_POSTS_EMBEDDER_DEFAULT_COUNT;
@@ -84,8 +120,8 @@ function handle_source_actions() {
         }
 
         // Generate ID if new
-        if (empty($source_id)) {
-            $source_id = sanitize_title($source_name) . '_' . time();
+        if ('' === $source_id) {
+            $source_id = generate_source_id($source_name, $sources);
         }
 
         $sources[$source_id] = array(
@@ -167,7 +203,13 @@ function embed_posts_settings_page_html() {
 
     // Get current tab
     $current_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'sources';
-    $edit_source = isset($_GET['edit']) ? sanitize_key($_GET['edit']) : '';
+    $edit_source = '';
+    if (isset($_GET['edit'])) {
+        $edit_source = sanitize_title(wp_unslash($_GET['edit']));
+        if ('new' !== $edit_source) {
+            $edit_source = \RestPostsEmbedder\Shortcodes\resolve_source_id(get_option('rest_posts_embedder_sources', array()), $edit_source);
+        }
+    }
 
     ?>
     <div class="wrap">
@@ -325,7 +367,7 @@ function render_sources_list() {
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <a href="?page=embed-posts-settings&tab=sources&edit=<?php echo esc_attr($source['id']); ?>" class="button button-small">
+                                <a href="?page=embed-posts-settings&tab=sources&edit=<?php echo esc_attr(rawurlencode($source['id'])); ?>" class="button button-small">
                                     <?php esc_html_e('Edit', 'restpostsembedder'); ?>
                                 </a>
                                 <form method="post" style="display: inline;">
