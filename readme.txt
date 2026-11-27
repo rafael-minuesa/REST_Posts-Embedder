@@ -4,7 +4,7 @@ Donate link: https://prowoos.com/
 Tags: rest api, embed posts, posts grid, shortcode, load more
 Requires at least: 5.3
 Tested up to: 7.1
-Stable tag: 3.9.0
+Stable tag: 3.10.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -19,7 +19,10 @@ REST Posts Embedder displays posts from any WordPress site as a responsive grid 
 * Filter by category, tag or any other REST API parameter
 * Responsive grid with separate column settings for desktop and mobile
 * Featured images with a responsive srcset
-* "Load More" button
+* "Load More" button, which can be turned off per feed
+* Classic and Grid card layouts, with column settings per feed
+* Posts from this site too, with category, tag and order
+* Posts Grid block for the block editor
 * Excerpt length per feed
 * Built-in caching, with a button to clear it
 * Spanish (es_ES) translation included
@@ -81,6 +84,15 @@ Set "Number of Posts" on the feed source. Each "Load More" click loads another b
 Feeds are cached for one hour by default. Change the duration, or clear the cache, under Settings → REST Posts Embedder → Cache Management.
 
 == Changelog ==
+
+= 3.10.0 =
+* New Grid layout (image on top, date, title, excerpt, "Read More"), next to the existing Classic layout. Choose it on the Styling tab, per feed source, or with `layout="grid"`.
+* New `columns` and `columns_tablet` attributes.
+* New `source="this-site"`: shows this site's own posts, with category, tag, order and offset. On multilingual sites each language shows its own posts.
+* New `excerpt_words` attribute for an excerpt length in words.
+* New `load_more="no"` attribute to hide the Load More button.
+* New Posts Grid block for the block editor, with a live preview.
+* The ProWoos Posts Grid plugin is merged in: `[prowoos_posts_grid]` keeps working once that plugin is deactivated.
 
 = 3.9.0 =
 * Security: Load More buttons stop working once their feed source is disabled, deleted or pointed elsewhere, and requests past the end of a feed no longer reach the remote site.
