@@ -187,7 +187,16 @@ function rest_posts_embedder($atts = array()) {
         // Columns on desktop and on tablets. Empty means the Styling settings.
         'columns' => '',
         'columns_tablet' => '',
+        // Query of a source="this-site" feed; ignored by remote feeds.
+        'category' => '',
+        'tag' => '',
+        'orderby' => '',
+        'order' => '',
+        'offset' => '',
     ), $atts, 'posts_embedder');
+
+    // A feed of this site's own posts (source="this-site").
+    $is_local = false;
 
     // Layout requested by the source, when the feed comes from one.
     $source_layout = '';
@@ -222,6 +231,8 @@ function rest_posts_embedder($atts = array()) {
                 $atts['excerpt_length'] = $source['excerpt_length'];
             }
             $source_layout = isset($source['layout']) ? $source['layout'] : '';
+        } elseif (is_local_source($atts['source'])) {
+            $is_local = true;
         } else {
             return '<p>' . sprintf(
                 __('Feed source "%s" not found. Please check your source ID in the plugin settings.', 'restpostsembedder'),
@@ -263,7 +274,9 @@ function rest_posts_embedder($atts = array()) {
      * @param string $endpoint The sanitized endpoint URL (http or https).
      * @param array  $atts     The shortcode attributes.
      */
-    $endpoint = apply_filters('rest_posts_embedder_endpoint', $endpoint, $atts);
+    if (!$is_local) {
+        $endpoint = apply_filters('rest_posts_embedder_endpoint', $endpoint, $atts);
+    }
 
     /**
      * Filter the validated post count before making the API request.
@@ -284,6 +297,10 @@ function rest_posts_embedder($atts = array()) {
     $excerpt_length = sanitize_excerpt_length(
         apply_filters('rest_posts_embedder_excerpt_length', $excerpt_length, $atts)
     );
+
+    if ($is_local) {
+        return render_local_feed(sanitize_local_query($atts), $count, $excerpt_length, $layout, $columns_style, $atts);
+    }
 
     // Check if endpoint is valid
     if (empty($endpoint)) {
@@ -723,7 +740,10 @@ function feed_gmt_timestamp($gmt_date) {
  * @return string The post HTML.
  */
 function render_single_post($remote_post, $excerpt_length, $layout = DEFAULT_LAYOUT) {
-    $post_html = render_card(prepare_card($remote_post, $excerpt_length), $layout);
+    $card = $remote_post instanceof \WP_Post
+        ? prepare_local_card($remote_post, $excerpt_length)
+        : prepare_card($remote_post, $excerpt_length);
+    $post_html = render_card($card, $layout);
 
     /**
      * Filter the HTML for individual post.
@@ -731,7 +751,8 @@ function render_single_post($remote_post, $excerpt_length, $layout = DEFAULT_LAY
      * @since 2.9.0
      * @since 3.10.0 The $layout parameter.
      * @param string $post_html   The post HTML.
-     * @param object $remote_post The remote post object.
+     * @param object $remote_post The remote post object, or a WP_Post for a
+     *                            "This site" feed.
      * @param string $layout      Layout ID the card was rendered with.
      */
     return apply_filters('rest_posts_embedder_post_html', $post_html, $remote_post, $layout);
@@ -745,6 +766,8 @@ function render_single_post($remote_post, $excerpt_length, $layout = DEFAULT_LAY
  *
  * - title        Post title, escaped HTML ("Untitled" when empty).
  * - link         Post URL, escaped for an attribute.
+ * - link_target  Attributes that open the post in a new tab, with a leading
+ *                space, or '' for links that stay in the same tab.
  * - date         Date the post was last modified, formatted for display and
  *                escaped, or '' when the feed gives no valid date.
  * - timestamp    That date as a Unix timestamp, or false.
@@ -892,6 +915,7 @@ function prepare_card($remote_post, $excerpt_length) {
     return array(
         'title'        => $title,
         'link'         => $link,
+        'link_target'  => ' target="_blank" rel="noopener noreferrer"',
         'date'         => esc_html($fordate),
         'timestamp'    => $timestamp,
         'date_iso'     => false !== $timestamp ? esc_attr((string) wp_date('c', $timestamp)) : '',
@@ -957,6 +981,19 @@ function render_load_more_button($endpoint, $count, $excerpt_length, $total_page
         update_option($option, $context, false);
     }
 
+    return load_more_button_html($token, $total_pages, $locale);
+}
+
+/**
+ * Markup of a Load More button.
+ *
+ * @since 3.10.0
+ * @param string $token       Token of the stored context.
+ * @param int    $total_pages Total pages available.
+ * @param string $locale      Locale the page was rendered in ('' to omit).
+ * @return string
+ */
+function load_more_button_html($token, $total_pages, $locale) {
     $label = __('Load More', 'restpostsembedder');
 
     return '<div class="embed-posts-load-more-wrap">'
@@ -1046,6 +1083,11 @@ function rest_posts_embedder_load_more() {
             update_option($option, $context, false);
         }
     }
+    // Feeds of this site's own posts store their query instead of an endpoint.
+    if (is_array($context) && isset($context['local']) && is_array($context['local'])) {
+        wp_send_json_success(load_more_local($context, $page, $locale));
+    }
+
     $expired = !is_array($context) || empty($context['endpoint']) || !is_string($context['endpoint']);
     if (!$expired && !is_load_more_context_current($context)) {
         // The feed behind this button was changed or retired. The context is

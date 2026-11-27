@@ -17,20 +17,20 @@ if (!defined('ABSPATH')) {
 
 $rpe_image = '';
 if ('' !== $card['image_src']) {
-    $rpe_image = '<a href="' . $card['link'] . '" target="_blank" rel="noopener noreferrer"><img src="' . $card['image_src'] . '"'
+    $rpe_image = '<a href="' . $card['link'] . '"' . $card['link_target'] . '><img src="' . $card['image_src'] . '"'
         . ('' !== $card['image_srcset'] ? ' srcset="' . $card['image_srcset'] . '" sizes="' . $card['image_sizes'] . '"' : '')
         . ' alt="' . $card['image_alt'] . '" loading="lazy" /></a>';
 }
 
 echo '<article class="embed-posts">
-                    <a href="' . $card['link'] . '" target="_blank" rel="noopener noreferrer">
+                    <a href="' . $card['link'] . '"' . $card['link_target'] . '>
                         <h3>' . $card['title'] . '</h3>
                     </a>
                     <small>' . $card['byline'] . '</small>
                     <div class="embed-post-content">
                         ' . $rpe_image . '
                         ' . $card['excerpt'] . '
-                        <a href="' . $card['link'] . '" target="_blank" rel="noopener noreferrer" class="read-more">
+                        <a href="' . $card['link'] . '"' . $card['link_target'] . ' class="read-more">
                             <b>' . $card['read_more'] . '</b>
                         </a>
                     </div>
