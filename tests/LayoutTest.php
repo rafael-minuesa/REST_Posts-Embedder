@@ -108,8 +108,8 @@ class LayoutTest extends WP_Ajax_UnitTestCase {
         );
     }
 
-    public function test_classic_is_the_only_layout_out_of_the_box() {
-        $this->assertSame(array('classic'), array_keys(get_layouts()));
+    public function test_classic_and_grid_ship_with_the_plugin() {
+        $this->assertSame(array('classic', 'grid'), array_keys(get_layouts()));
         $this->assertSame('classic', resolve_layout());
     }
 

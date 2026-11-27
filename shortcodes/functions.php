@@ -184,6 +184,9 @@ function rest_posts_embedder($atts = array()) {
         'excerpt_length' => '',
         // Card layout ID. Empty means the source's layout, then the site's.
         'layout' => '',
+        // Columns on desktop and on tablets. Empty means the Styling settings.
+        'columns' => '',
+        'columns_tablet' => '',
     ), $atts, 'posts_embedder');
 
     // Layout requested by the source, when the feed comes from one.
@@ -251,6 +254,7 @@ function rest_posts_embedder($atts = array()) {
     }
 
     $layout = resolve_layout($atts['layout'], $source_layout);
+    $columns_style = columns_style($atts['columns'], $atts['columns_tablet']);
 
     /**
      * Filter the sanitized endpoint URL before making the API request.
@@ -301,7 +305,7 @@ function rest_posts_embedder($atts = array()) {
     // source and a plain endpoint must not share each other's button. So is
     // the layout, which decides all of the markup.
     $locale    = determine_locale();
-    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length . '_' . $locale . '_' . $bound_source . '_' . $bound_revision . '_' . $layout);
+    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length . '_' . $locale . '_' . $bound_source . '_' . $bound_revision . '_' . $layout . ('' !== $columns_style ? '_' . $columns_style : ''));
 
     // Try to get cached posts
     $cached_posts = get_transient($cache_key);
@@ -332,7 +336,7 @@ function rest_posts_embedder($atts = array()) {
 
     // Render the grid.
     $allposts  = '<div class="embed-posts-container embed-posts-layout-' . esc_attr($layout) . '">';
-    $allposts .= '<div class="embed-posts-wrapper">';
+    $allposts .= '<div class="embed-posts-wrapper"' . ('' !== $columns_style ? ' style="' . esc_attr($columns_style) . '"' : '') . '>';
     $allposts .= render_articles($remote_posts, $excerpt_length, $layout);
     $allposts .= '</div>'; // Close embed-posts-wrapper
 
@@ -359,6 +363,52 @@ function rest_posts_embedder($atts = array()) {
     set_transient($cache_key, $allposts, $cache_expiration);
 
     return $demo_notice . $allposts;
+}
+
+/**
+ * Number of grid columns from a shortcode attribute.
+ *
+ * @since 3.10.0
+ * @param mixed $value Attribute value.
+ * @return int Columns between 1 and REST_POSTS_EMBEDDER_MAX_COLUMNS, or 0
+ *             when the attribute is empty or not a number.
+ */
+function sanitize_columns($value) {
+    if (!is_scalar($value) || !is_numeric(trim((string) $value))) {
+        return 0;
+    }
+    // (int), not absint(): a negative count is too small, not its opposite.
+    return max(1, min(REST_POSTS_EMBEDDER_MAX_COLUMNS, (int) $value));
+}
+
+/**
+ * Inline style that overrides the column counts of one feed.
+ *
+ * The Styling settings set --rpe-cols, --rpe-cols-tablet and
+ * --rpe-cols-mobile for every feed (see build_inline_css()); a feed's own
+ * attributes override them on its wrapper. Without columns_tablet, a feed
+ * with its own columns gets min(columns, 2) on tablets.
+ *
+ * @since 3.10.0
+ * @param mixed $columns        Desktop columns attribute.
+ * @param mixed $columns_tablet Tablet columns attribute.
+ * @return string CSS declarations, or '' when neither attribute is set.
+ */
+function columns_style($columns, $columns_tablet) {
+    $style   = '';
+    $desktop = sanitize_columns($columns);
+    $tablet  = sanitize_columns($columns_tablet);
+    // Tablets never get more columns than desktops by default.
+    if (0 === $tablet && $desktop > 0) {
+        $tablet = min($desktop, 2);
+    }
+    if ($desktop > 0) {
+        $style .= '--rpe-cols: ' . $desktop . ';';
+    }
+    if ($tablet > 0) {
+        $style .= ('' !== $style ? ' ' : '') . '--rpe-cols-tablet: ' . $tablet . ';';
+    }
+    return $style;
 }
 
 /**
@@ -698,6 +748,7 @@ function render_single_post($remote_post, $excerpt_length, $layout = DEFAULT_LAY
  * - date         Date the post was last modified, formatted for display and
  *                escaped, or '' when the feed gives no valid date.
  * - timestamp    That date as a Unix timestamp, or false.
+ * - date_iso     That date in ISO 8601 for a datetime attribute, or ''.
  * - author       Author name, escaped HTML.
  * - author_url   Author archive URL, escaped, or ''.
  * - author_html  Author name, linked when author_url is set.
@@ -843,6 +894,7 @@ function prepare_card($remote_post, $excerpt_length) {
         'link'         => $link,
         'date'         => esc_html($fordate),
         'timestamp'    => $timestamp,
+        'date_iso'     => false !== $timestamp ? esc_attr((string) wp_date('c', $timestamp)) : '',
         'author'       => $author_name,
         'author_url'   => $author_name_url,
         'author_html'  => $author_html,
@@ -1093,24 +1145,32 @@ function build_inline_css() {
     $show_images_desktop = absint(get_option('embed_posts_show_images_desktop', 1));
     $show_images_mobile = absint(get_option('embed_posts_show_images_mobile', 1));
 
+    // Layouts read these; a feed's columns attributes override them inline.
+    $columns_desktop = max(1, $columns_desktop);
+    $columns_mobile  = max(1, $columns_mobile);
+    $columns_tablet  = min($columns_desktop, 2);
+
     $inline_css = "
     /* Column configuration for desktop */
     .embed-posts-wrapper {
-        grid-template-columns: repeat({$columns_desktop}, 1fr);
+        --rpe-cols: {$columns_desktop};
+        --rpe-cols-tablet: {$columns_tablet};
+        --rpe-cols-mobile: {$columns_mobile};
+        grid-template-columns: repeat(var(--rpe-cols), 1fr);
     }
 
     /* Hide images on desktop if disabled. Scoped to desktop widths: an
        unqualified rule would also hide them on mobile. */
-    " . (!$show_images_desktop ? "@media only screen and (min-width: 769px) { .embed-posts img { display: none; } }" : "") . "
+    " . (!$show_images_desktop ? "@media only screen and (min-width: 769px) { .embed-posts img, .embed-posts-card-image { display: none; } }" : "") . "
 
     /* Mobile styles */
     @media only screen and (max-width: 768px) {
         .embed-posts-wrapper {
-            grid-template-columns: repeat({$columns_mobile}, 1fr);
+            grid-template-columns: repeat(var(--rpe-cols-mobile), 1fr);
         }
 
         /* Hide images on mobile if disabled */
-        " . (!$show_images_mobile ? ".embed-posts img { display: none !important; }" : "") . "
+        " . (!$show_images_mobile ? ".embed-posts img, .embed-posts-card-image { display: none !important; }" : "") . "
     }
     ";
 

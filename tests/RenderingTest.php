@@ -194,8 +194,8 @@ class RenderingTest extends WP_UnitTestCase {
         update_option('embed_posts_show_images_mobile', $mobile);
         $css = preg_replace('/\s+/', ' ', build_inline_css());
 
-        $desktop_rule = '@media only screen and (min-width: 769px) { .embed-posts img { display: none; } }';
-        $mobile_rule = '.embed-posts img { display: none !important; }';
+        $desktop_rule = '@media only screen and (min-width: 769px) { .embed-posts img, .embed-posts-card-image { display: none; } }';
+        $mobile_rule = '.embed-posts img, .embed-posts-card-image { display: none !important; }';
         $this->assertSame($desktop ? 0 : 1, substr_count($css, $desktop_rule));
         $this->assertSame($mobile ? 0 : 1, substr_count($css, $mobile_rule));
 

@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Card layouts. A Layout setting on the Styling tab, a Layout field on each feed source and a `layout` shortcode attribute choose how posts are displayed. The current look is the Classic layout and stays the default, with unchanged markup.
+- Grid layout: cards with the image on top (16:10), then the date, title, excerpt and a "Read more" link, with a hover lift. The look of the ProWoos Posts Grid plugin.
+- `columns` and `columns_tablet` shortcode attributes, for any layout. The Styling tab's column settings stay the defaults.
 - `rest_posts_embedder_layouts` filter to register more layouts as template files, and a `$layout` argument on `rest_posts_embedder_post_html`.
 
 ## [3.9.0] - 2026-11-27

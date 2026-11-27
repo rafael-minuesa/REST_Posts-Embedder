@@ -35,13 +35,15 @@ To show a single category or tag, add it to the endpoint, for example `?categori
 | `endpoint`       | REST API endpoint URL, for use without a source.                            |
 | `count`          | Posts per batch (1 to 20). Each "Load More" click loads another batch.      |
 | `excerpt_length` | Excerpt length in characters. `0` shows the full excerpt. Default `200`.    |
-| `layout`         | Card layout ID, for example `classic`. Default: the source's layout, then the site's. |
+| `layout`         | Card layout: `classic` or `grid`. Default: the source's layout, then the site's. |
+| `columns`        | Columns on desktop (1 to 5). Default: the Styling setting.                  |
+| `columns_tablet` | Columns on tablets (1 to 5), for layouts with a tablet step such as Grid. Default: the smaller of `columns` and 2. |
 
 When `source` is set, the source's endpoint and post count are used and the `endpoint` and `count` attributes are ignored. `excerpt_length` and `layout` still override the source settings.
 
 ### Layouts
 
-The card layout is chosen on the Styling tab for the whole site, per feed source, or per shortcode with `layout`. The plugin ships the Classic layout. A theme or plugin can add one with the `rest_posts_embedder_layouts` filter, giving a label and a template file. The template receives the card data as `$card`, already escaped (see `prepare_card()` in `shortcodes/functions.php`).
+The card layout is chosen on the Styling tab for the whole site, per feed source, or per shortcode with `layout`. The plugin ships two layouts. Classic shows the title and byline above the image. Grid shows cards with the image on top, then the date, title, excerpt and a "Read more" link, in 1, 2 or 3 columns by screen width (phone, tablet from 544px, desktop from 921px). A theme or plugin can add one with the `rest_posts_embedder_layouts` filter, giving a label and a template file. The template receives the card data as `$card`, already escaped (see `prepare_card()` in `shortcodes/functions.php`).
 
 ### Features
 

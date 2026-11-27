@@ -89,6 +89,112 @@
     text-decoration: underline;
 }
 
+/* Grid layout (.embed-posts-layout-grid). Phones show --rpe-cols-mobile
+   columns, tablets --rpe-cols-tablet and desktops --rpe-cols. */
+.embed-posts-layout-grid .embed-posts-wrapper {
+    grid-template-columns: repeat(var(--rpe-cols-mobile, 1), 1fr);
+    grid-gap: var(--rpe-grid-gap, 28px);
+}
+
+@media (min-width: 544px) {
+    .embed-posts-layout-grid .embed-posts-wrapper {
+        grid-template-columns: repeat(var(--rpe-cols-tablet, 2), 1fr);
+    }
+}
+
+@media (min-width: 921px) {
+    .embed-posts-layout-grid .embed-posts-wrapper {
+        grid-template-columns: repeat(var(--rpe-cols, 3), 1fr);
+    }
+}
+
+.embed-posts-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--rpe-card-background, #fff);
+    border-radius: 8px;
+    box-shadow: var(--rpe-card-shadow, 0 2px 8px rgba(0, 0, 0, 0.08));
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.embed-posts-card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.14);
+    transform: translateY(-3px);
+}
+
+.embed-posts-card-image {
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+}
+
+.embed-posts-card-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.embed-posts-card:hover .embed-posts-card-image img {
+    transform: scale(1.04);
+}
+
+.embed-posts-card-body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 20px;
+}
+
+.embed-posts-card-date {
+    margin-bottom: 6px;
+    color: #888;
+    font-size: 0.78em;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.embed-posts-card-title {
+    margin: 0 0 10px;
+    font-size: 1.15em;
+    line-height: 1.4;
+}
+
+.embed-posts-card-title a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.embed-posts-card-title a:hover {
+    color: var(--rpe-link-color, #0073aa);
+}
+
+.embed-posts-card-excerpt {
+    flex-grow: 1;
+    margin: 0 0 16px;
+    color: #555;
+    font-size: 0.9em;
+    line-height: 1.65;
+}
+
+.embed-posts-card-excerpt p {
+    margin: 0;
+}
+
+.embed-posts-card-readmore {
+    margin-top: auto;
+    color: var(--rpe-link-color, #0073aa);
+    font-size: 0.85em;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.embed-posts-card-readmore:hover {
+    text-decoration: underline;
+}
+
 /* Load More button */
 .embed-posts-load-more-wrap {
     display: flex;
