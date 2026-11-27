@@ -194,6 +194,7 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'RestPostsEmbedde
 require plugin_dir_path( __FILE__ ) . 'admin/functions.php';
 
 // Include shortcode functions
+require plugin_dir_path( __FILE__ ) . 'shortcodes/layouts.php';
 require plugin_dir_path( __FILE__ ) . 'shortcodes/functions.php';
 
 // Register shortcode

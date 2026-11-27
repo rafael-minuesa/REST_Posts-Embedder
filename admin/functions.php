@@ -107,6 +107,10 @@ function handle_source_actions() {
             ? \RestPostsEmbedder\Shortcodes\sanitize_excerpt_length(wp_unslash($_POST['source_excerpt_length']))
             : REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH;
         $source_enabled = isset($_POST['source_enabled']) ? true : false;
+        // '' = the site's layout setting.
+        $source_layout = isset($_POST['source_layout'])
+            ? \RestPostsEmbedder\Shortcodes\sanitize_layout(sanitize_key(wp_unslash($_POST['source_layout'])))
+            : '';
 
         // Validate
         if (empty($source_name) || empty($source_endpoint)) {
@@ -130,6 +134,7 @@ function handle_source_actions() {
             'endpoint' => $source_endpoint,
             'count' => $source_count,
             'excerpt_length' => $source_excerpt_length,
+            'layout' => $source_layout,
             'enabled' => $source_enabled
         );
 
@@ -404,6 +409,7 @@ function render_source_form($source_id) {
         'endpoint' => '',
         'count' => REST_POSTS_EMBEDDER_DEFAULT_COUNT,
         'excerpt_length' => (int) get_option('embed_posts_excerpt_length', REST_POSTS_EMBEDDER_DEFAULT_EXCERPT_LENGTH),
+        'layout' => '',
         'enabled' => true
     ) : (isset($sources[$source_id]) ? $sources[$source_id] : null);
 
@@ -494,6 +500,21 @@ function render_source_form($source_id) {
                 </tr>
                 <tr>
                     <th scope="row">
+                        <label for="source_layout"><?php esc_html_e('Layout', 'restpostsembedder'); ?></label>
+                    </th>
+                    <td>
+                        <?php $source_layout = isset($source['layout']) ? \RestPostsEmbedder\Shortcodes\sanitize_layout($source['layout']) : ''; ?>
+                        <select id="source_layout" name="source_layout">
+                            <option value="" <?php selected($source_layout, ''); ?>><?php esc_html_e('Site default (Styling tab)', 'restpostsembedder'); ?></option>
+                            <?php foreach (\RestPostsEmbedder\Shortcodes\get_layouts() as $layout_id => $layout) : ?>
+                                <option value="<?php echo esc_attr($layout_id); ?>" <?php selected($source_layout, $layout_id); ?>><?php echo esc_html($layout['label']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="description"><?php esc_html_e('How the posts of this feed are displayed. A layout attribute in the shortcode overrides it.', 'restpostsembedder'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
                         <label for="source_enabled"><?php esc_html_e('Status', 'restpostsembedder'); ?></label>
                     </th>
                     <td>
@@ -543,6 +564,26 @@ function render_styling_settings() {
             do_settings_sections('embed_posts_styling');
             ?>
             <table class="form-table">
+                <tr valign="top">
+                    <th scope="row">
+                        <label for="embed_posts_layout"><?php esc_html_e('Layout', 'restpostsembedder'); ?></label>
+                    </th>
+                    <td>
+                        <?php $default_layout = \RestPostsEmbedder\Shortcodes\get_default_layout(); ?>
+                        <select id="embed_posts_layout" name="embed_posts_layout">
+                            <?php foreach (\RestPostsEmbedder\Shortcodes\get_layouts() as $layout_id => $layout) : ?>
+                                <option value="<?php echo esc_attr($layout_id); ?>" <?php selected($default_layout, $layout_id); ?>><?php echo esc_html($layout['label']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="description">
+                            <?php printf(
+                                /* translators: %s: example shortcode attribute. */
+                                esc_html__('How embedded posts are displayed. Each feed source can choose its own, and a shortcode can override both with %s.', 'restpostsembedder'),
+                                '<code>layout="classic"</code>'
+                            ); ?>
+                        </p>
+                    </td>
+                </tr>
                 <tr valign="top">
                     <th scope="row">
                         <label for="embed_posts_count"><?php esc_html_e('Number of Posts', 'restpostsembedder'); ?></label>
@@ -787,6 +828,12 @@ function embed_posts_styling_init() {
         'default' => REST_POSTS_EMBEDDER_DEFAULT_COUNT
     ));
 
+    register_setting('embed_posts_styling', 'embed_posts_layout', array(
+        'type' => 'string',
+        'sanitize_callback' => 'RestPostsEmbedder\\Admin\\sanitize_layout_setting',
+        'default' => \RestPostsEmbedder\Shortcodes\DEFAULT_LAYOUT
+    ));
+
     register_setting('embed_posts_styling', 'embed_posts_excerpt_length', array(
         'type' => 'number',
         'sanitize_callback' => 'RestPostsEmbedder\\Shortcodes\\sanitize_excerpt_length',
@@ -845,6 +892,18 @@ function embed_posts_cache_init() {
     ));
 }
 add_action('admin_init', 'RestPostsEmbedder\\Admin\\embed_posts_cache_init');
+
+/**
+ * Sanitize the site's layout setting: a registered layout, or Classic.
+ *
+ * @since 3.10.0
+ * @param mixed $value Submitted value.
+ * @return string Layout ID.
+ */
+function sanitize_layout_setting($value) {
+    $layout = \RestPostsEmbedder\Shortcodes\sanitize_layout($value);
+    return '' !== $layout ? $layout : \RestPostsEmbedder\Shortcodes\DEFAULT_LAYOUT;
+}
 
 /**
  * Keep the custom cache duration within the documented 1-168 hours.

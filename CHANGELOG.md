@@ -5,6 +5,11 @@ All notable changes to REST Posts Embedder will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Card layouts. A Layout setting on the Styling tab, a Layout field on each feed source and a `layout` shortcode attribute choose how posts are displayed. The current look is the Classic layout and stays the default, with unchanged markup.
+- `rest_posts_embedder_layouts` filter to register more layouts as template files, and a `$layout` argument on `rest_posts_embedder_post_html`.
+
 ## [3.9.0] - 2026-11-27
 
 ### Added

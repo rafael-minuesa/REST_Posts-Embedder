@@ -6,6 +6,7 @@ class UninstallTest extends WP_UnitTestCase {
         'rest_posts_embedder_sources',
         'embed_posts_endpoint',
         'embed_posts_count',
+        'embed_posts_layout',
         'embed_posts_excerpt_length',
         'embed_posts_columns_desktop',
         'embed_posts_columns_mobile',
