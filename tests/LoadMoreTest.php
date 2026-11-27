@@ -56,6 +56,7 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
             'title' => (object) array('rendered' => 'Remote post page ' . $page),
             'link' => 'https://example.org/page-' . $page,
             'modified' => '2026-01-15T12:00:00',
+            'modified_gmt' => '2026-01-15T12:00:00',
             'excerpt' => (object) array('rendered' => '<p>Excerpt ' . $page . '</p>'),
         );
         return $this->response(200, wp_json_encode(array($post)));

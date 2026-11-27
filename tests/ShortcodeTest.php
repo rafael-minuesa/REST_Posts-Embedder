@@ -48,6 +48,7 @@ class ShortcodeTest extends WP_UnitTestCase {
             'title' => (object) array('rendered' => 'A remote post'),
             'link' => 'https://example.org/a-post',
             'modified' => '2026-01-15T12:00:00',
+            'modified_gmt' => '2026-01-15T12:00:00',
             'excerpt' => (object) array('rendered' => '<p>Alpha beta gamma delta.</p>'),
         );
     }

@@ -23,6 +23,9 @@ msgstr "j \\d\\e F Y"
 msgid "%1$s, by %2$s"
 msgstr "%1$s, por %2$s"
 
+msgid "by %s"
+msgstr "por %s"
+
 msgid "Unknown Author"
 msgstr "Autor desconocido"
 
