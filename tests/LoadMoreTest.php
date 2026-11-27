@@ -118,7 +118,7 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
     public function test_button_is_rendered_only_when_more_pages_exist() {
         $html = do_shortcode('[posts_embedder]');
         $this->assertSame(1, preg_match(
-            '#<button type="button" class="embed-posts-load-more" data-token="([a-f0-9]{32})" data-page="1" data-total-pages="3">Load More</button>#',
+            '#<button type="button" class="embed-posts-load-more" data-token="([a-f0-9]{32})" data-page="1" data-total-pages="3" data-locale="en_US">Load More</button>#',
             $html,
             $match
         ));
@@ -219,5 +219,63 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
         $this->assertNotFalse(has_action('wp_ajax_' . self::ACTION));
         $token = $this->rendered_token();
         $this->assertTrue($this->load_more(array('token' => $token, 'page' => '2'))['success']);
+    }
+
+    /** The suite loads the plugin from outside wp-content/plugins; point WordPress at its bundled catalogs. */
+    private function use_bundled_catalogs() {
+        add_filter('load_textdomain_mofile', function ($mofile, $domain) {
+            return 'restpostsembedder' === $domain ? dirname(__DIR__) . '/languages/' . basename($mofile) : $mofile;
+        }, 10, 2);
+        add_action('change_locale', function ($locale) {
+            unload_textdomain('restpostsembedder');
+            load_textdomain('restpostsembedder', "restpostsembedder-{$locale}.mo", $locale);
+        });
+    }
+
+    public function test_appended_posts_use_the_locale_of_the_page_not_of_the_ajax_request() {
+        $this->use_bundled_catalogs();
+        $token = $this->rendered_token();
+        $this->assertSame('en_US', determine_locale());
+
+        $spanish = $this->load_more(array('token' => $token, 'page' => '2', 'locale' => 'es_ES'));
+        $this->assertTrue($spanish['success']);
+        $this->assertStringContainsString('Leer más...', $spanish['data']['html']);
+        // The date format comes from the plugin's catalog. Month names are core's,
+        // and the test suite's es_ES core catalog does not translate them.
+        $this->assertStringContainsString('15 de ', $spanish['data']['html']);
+        $this->assertStringNotContainsString('15th of', $spanish['data']['html']);
+        // The request's own locale is back in place afterwards.
+        $this->assertSame('en_US', determine_locale());
+        $this->assertSame('Read more...', __('Read more...', 'restpostsembedder'));
+
+        // The same page for an English page is a separate cache entry.
+        $english = $this->load_more(array('token' => $token, 'page' => '2', 'locale' => 'en_US'));
+        $this->assertStringContainsString('Read more...', $english['data']['html']);
+        $this->assertStringContainsString('15th of January 2026', $english['data']['html']);
+        $this->assertCount(2, $this->requests);
+
+        // Both are now cached.
+        $this->assertSame($spanish, $this->load_more(array('token' => $token, 'page' => '2', 'locale' => 'es_ES')));
+        $this->assertSame($english, $this->load_more(array('token' => $token, 'page' => '2')));
+        $this->assertCount(2, $this->requests);
+    }
+
+    /** @dataProvider locales_not_installed */
+    public function test_locale_that_is_not_installed_falls_back_to_the_request_locale($locale) {
+        $token = $this->rendered_token();
+        $first = $this->load_more(array('token' => $token, 'page' => '2', 'locale' => $locale));
+        $this->assertStringContainsString('Read more...', $first['data']['html']);
+        // No cache entry of its own: a visitor cannot multiply entries with made-up locales.
+        $this->load_more(array('token' => $token, 'page' => '2'));
+        $this->assertCount(1, $this->requests);
+    }
+
+    public static function locales_not_installed() {
+        return array(
+            'unknown' => array('xx_YY'),
+            'path traversal' => array('../../wp-config'),
+            'markup' => array('<script>alert(1)</script>'),
+            'very long' => array(str_repeat('a', 5000)),
+        );
     }
 }
