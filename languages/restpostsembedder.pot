@@ -2,14 +2,14 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: REST Posts Embedder 3.8.0\n"
+"Project-Id-Version: REST Posts Embedder 3.9.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/restpostsembedder\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-15T19:57:10+00:00\n"
+"POT-Creation-Date: 2026-11-27T15:18:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: restpostsembedder\n"
@@ -44,526 +44,535 @@ msgstr ""
 msgid "REST Posts Embedder Settings"
 msgstr ""
 
-#: admin/functions.php:54
+#: admin/functions.php:86
 msgid "Source deleted successfully!"
 msgstr ""
 
-#: admin/functions.php:80
+#: admin/functions.php:116
 msgid "Error: Source name and endpoint are required."
 msgstr ""
 
-#: admin/functions.php:104
+#: admin/functions.php:140
 msgid "Source saved successfully!"
 msgstr ""
 
-#: admin/functions.php:145
+#: admin/functions.php:181
 msgid "Cache cleared successfully!"
 msgstr ""
 
-#: admin/functions.php:180
+#: admin/functions.php:222
 msgid "Feed Sources"
 msgstr ""
 
-#: admin/functions.php:183
+#: admin/functions.php:225
 msgid "Styling"
 msgstr ""
 
-#: admin/functions.php:186
-#: admin/functions.php:641
+#: admin/functions.php:228
+#: admin/functions.php:683
 msgid "Cache Management"
 msgstr ""
 
-#: admin/functions.php:226
+#: admin/functions.php:268
 msgid "Manage Feed Sources"
 msgstr ""
 
-#: admin/functions.php:228
-#: admin/functions.php:383
+#: admin/functions.php:270
+#: admin/functions.php:425
 msgid "Add New Source"
 msgstr ""
 
-#: admin/functions.php:234
+#: admin/functions.php:276
 msgid "About the Demo Feed"
 msgstr ""
 
-#: admin/functions.php:235
+#: admin/functions.php:277
 msgid "The plugin comes with a demo feed of posts from ProWoos, so you can see how embedded posts look right after activation. It is for demonstration only. Sources that use it are marked \"Demo\" below."
 msgstr ""
 
-#: admin/functions.php:236
+#: admin/functions.php:278
 msgid "To show your own posts:"
 msgstr ""
 
-#: admin/functions.php:238
+#: admin/functions.php:280
 msgid "Click \"Add New Source\", or edit the demo source."
 msgstr ""
 
-#: admin/functions.php:239
+#: admin/functions.php:281
 msgid "Enter the REST API endpoint of the site whose posts you want to show (see the examples on this page) and save."
 msgstr ""
 
 #. translators: %s: example shortcode.
-#: admin/functions.php:243
+#: admin/functions.php:285
 #, php-format
 msgid "Place the shortcode shown for that source on any page, for example %s."
 msgstr ""
 
 #. translators: %s: the shortcode without attributes.
-#: admin/functions.php:252
+#: admin/functions.php:294
 #, php-format
 msgid "The shortcode without a source, %s, always shows the demo feed."
 msgstr ""
 
-#: admin/functions.php:261
+#: admin/functions.php:303
 msgid "How to Get Your REST API Endpoint URL"
 msgstr ""
 
-#: admin/functions.php:262
+#: admin/functions.php:304
 msgid "To get posts from any WordPress site, use this format:"
 msgstr ""
 
-#: admin/functions.php:263
+#: admin/functions.php:305
 msgid "Basic endpoint:"
 msgstr ""
 
-#: admin/functions.php:266
+#: admin/functions.php:308
 msgid "Filter by categories:"
 msgstr ""
 
-#: admin/functions.php:268
+#: admin/functions.php:310
 msgid "Replace \"111\" with your category ID. To find category IDs, go to Posts → Categories in the WordPress admin."
 msgstr ""
 
-#: admin/functions.php:270
+#: admin/functions.php:312
 msgid "Filter by tags:"
 msgstr ""
 
-#: admin/functions.php:272
+#: admin/functions.php:314
 msgid "Replace \"222\" with your tag ID. To find tag IDs, go to Posts → Tags in the WordPress admin."
 msgstr ""
 
-#: admin/functions.php:274
+#: admin/functions.php:316
 msgid "Combine multiple filters:"
 msgstr ""
 
-#: admin/functions.php:276
+#: admin/functions.php:318
 msgid "You can combine categories, tags, and other WordPress REST API parameters."
 msgstr ""
 
-#: admin/functions.php:278
+#: admin/functions.php:320
 msgid "Note:"
 msgstr ""
 
-#: admin/functions.php:279
+#: admin/functions.php:321
 msgid "The ?_embed parameter includes featured images and author information. Always include it for best results."
 msgstr ""
 
-#: admin/functions.php:282
+#: admin/functions.php:324
 msgid "Configure multiple REST API feed sources. Use the source ID in your shortcode to display posts from different sources."
 msgstr ""
 
-#: admin/functions.php:283
-#: admin/functions.php:619
+#: admin/functions.php:325
+#: admin/functions.php:661
 msgid "Example:"
 msgstr ""
 
-#: admin/functions.php:286
+#: admin/functions.php:328
 msgid "No sources configured yet. Click \"Add New Source\" to create your first feed source."
 msgstr ""
 
-#: admin/functions.php:291
+#: admin/functions.php:333
 msgid "Name"
 msgstr ""
 
-#: admin/functions.php:292
+#: admin/functions.php:334
 msgid "Source ID"
 msgstr ""
 
-#: admin/functions.php:293
+#: admin/functions.php:335
 msgid "Endpoint"
 msgstr ""
 
-#: admin/functions.php:294
+#: admin/functions.php:336
 msgid "Post Count"
 msgstr ""
 
-#: admin/functions.php:295
+#: admin/functions.php:337
 msgid "Excerpt"
 msgstr ""
 
-#: admin/functions.php:296
-#: admin/functions.php:455
+#: admin/functions.php:338
+#: admin/functions.php:497
 msgid "Status"
 msgstr ""
 
-#: admin/functions.php:297
+#: admin/functions.php:339
 msgid "Actions"
 msgstr ""
 
-#: admin/functions.php:306
+#: admin/functions.php:348
 msgid "Demo"
 msgstr ""
 
-#: admin/functions.php:316
+#: admin/functions.php:358
 #, php-format
 msgid "%d chars"
 msgstr ""
 
-#: admin/functions.php:317
+#: admin/functions.php:359
 msgid "Full"
 msgstr ""
 
-#: admin/functions.php:322
+#: admin/functions.php:364
 msgid "Enabled"
 msgstr ""
 
-#: admin/functions.php:324
+#: admin/functions.php:366
 msgid "Disabled"
 msgstr ""
 
-#: admin/functions.php:329
+#: admin/functions.php:371
 msgid "Edit"
 msgstr ""
 
-#: admin/functions.php:335
+#: admin/functions.php:377
 msgid "Are you sure you want to delete this source?"
 msgstr ""
 
-#: admin/functions.php:336
+#: admin/functions.php:378
 msgid "Delete"
 msgstr ""
 
-#: admin/functions.php:375
+#: admin/functions.php:417
 msgid "Source not found."
 msgstr ""
 
-#: admin/functions.php:381
+#: admin/functions.php:423
 msgid "Back to Sources"
 msgstr ""
 
-#: admin/functions.php:383
+#: admin/functions.php:425
 msgid "Edit Source"
 msgstr ""
 
-#: admin/functions.php:394
+#: admin/functions.php:436
 msgid "Source Name"
 msgstr ""
 
-#: admin/functions.php:399
+#: admin/functions.php:441
 msgid "A friendly name for this feed source."
 msgstr ""
 
-#: admin/functions.php:404
+#: admin/functions.php:446
 msgid "REST API Endpoint"
 msgstr ""
 
-#: admin/functions.php:409
+#: admin/functions.php:451
 msgid "Full REST API endpoint URL (e.g., https://example.com/wp-json/wp/v2/posts?_embed)"
 msgstr ""
 
-#: admin/functions.php:411
+#: admin/functions.php:453
 msgid "This is the ProWoos demo feed. Replace it with the endpoint of the site whose posts you want to show."
 msgstr ""
 
-#: admin/functions.php:417
-#: admin/functions.php:506
+#: admin/functions.php:459
+#: admin/functions.php:548
 msgid "Number of Posts"
 msgstr ""
 
-#: admin/functions.php:426
+#: admin/functions.php:468
 #, php-format
 msgid "Number of posts to load per batch (%d-%d). Each \"Load More\" click loads another batch."
 msgstr ""
 
-#: admin/functions.php:435
+#: admin/functions.php:477
 msgid "Excerpt Length"
 msgstr ""
 
-#: admin/functions.php:443
-#: admin/functions.php:539
+#: admin/functions.php:485
+#: admin/functions.php:581
 msgid "characters"
 msgstr ""
 
-#: admin/functions.php:446
+#: admin/functions.php:488
 #, php-format
 msgid "Maximum excerpt length for this feed, in characters (0-%d). Use 0 to show the full excerpt from the source. Default: %d."
 msgstr ""
 
-#: admin/functions.php:461
+#: admin/functions.php:503
 msgid "Enable this source"
 msgstr ""
 
-#: admin/functions.php:463
+#: admin/functions.php:505
 msgid "Disabled sources cannot be used in shortcodes."
 msgstr ""
 
-#: admin/functions.php:469
+#: admin/functions.php:511
 msgid "Shortcode:"
 msgstr ""
 
-#: admin/functions.php:475
+#: admin/functions.php:517
 msgid "Add Source"
 msgstr ""
 
-#: admin/functions.php:475
+#: admin/functions.php:517
 msgid "Update Source"
 msgstr ""
 
-#: admin/functions.php:478
+#: admin/functions.php:520
 msgid "Cancel"
 msgstr ""
 
-#: admin/functions.php:495
+#: admin/functions.php:537
 msgid "Styling Settings"
 msgstr ""
 
-#: admin/functions.php:496
+#: admin/functions.php:538
 msgid "Configure the display and appearance of embedded posts."
 msgstr ""
 
-#: admin/functions.php:519
+#: admin/functions.php:561
 #, php-format
 msgid "Default number of posts to display (%d-%d). Can be overridden in shortcode."
 msgstr ""
 
-#: admin/functions.php:528
+#: admin/functions.php:570
 msgid "Default Excerpt Length"
 msgstr ""
 
-#: admin/functions.php:542
+#: admin/functions.php:584
 #, php-format
 msgid "Default maximum excerpt length, in characters (0-%1$d). Use 0 to show the full excerpt from the source. Default: %2$d. Each feed source can override this."
 msgstr ""
 
-#: admin/functions.php:551
+#: admin/functions.php:593
 msgid "Number of Columns (Desktop)"
 msgstr ""
 
-#: admin/functions.php:563
+#: admin/functions.php:605
 msgid "Number of columns to display on desktop (1-5). Default: 2"
 msgstr ""
 
-#: admin/functions.php:569
+#: admin/functions.php:611
 msgid "Number of Columns (Mobile)"
 msgstr ""
 
-#: admin/functions.php:581
+#: admin/functions.php:623
 msgid "Number of columns to display on mobile devices (1-3). Default: 1"
 msgstr ""
 
-#: admin/functions.php:587
+#: admin/functions.php:629
 msgid "Show Featured Images"
 msgstr ""
 
-#: admin/functions.php:593
+#: admin/functions.php:635
 msgid "Show on Desktop"
 msgstr ""
 
-#: admin/functions.php:599
+#: admin/functions.php:641
 msgid "Show on Mobile"
 msgstr ""
 
-#: admin/functions.php:602
+#: admin/functions.php:644
 msgid "Control whether featured images are displayed on different devices."
 msgstr ""
 
-#: admin/functions.php:608
+#: admin/functions.php:650
 msgid "Custom CSS"
 msgstr ""
 
-#: admin/functions.php:616
+#: admin/functions.php:658
 msgid "Add your custom CSS here. It will be applied to all embedded posts. Do not include <style> tags."
 msgstr ""
 
-#: admin/functions.php:626
+#: admin/functions.php:668
 msgid "Save Styling Settings"
 msgstr ""
 
-#: admin/functions.php:643
+#: admin/functions.php:685
 msgid "Clear Cache"
 msgstr ""
 
-#: admin/functions.php:644
+#: admin/functions.php:686
 msgid "Clear all cached REST API responses. This will force the plugin to fetch fresh data from the API on the next request."
 msgstr ""
 
-#: admin/functions.php:648
+#: admin/functions.php:690
 msgid "Clear All Cache Now"
 msgstr ""
 
-#: admin/functions.php:654
+#: admin/functions.php:696
 msgid "Cache Expiration Settings"
 msgstr ""
 
-#: admin/functions.php:655
+#: admin/functions.php:697
 msgid "Configure how long cached data should be stored before automatically refreshing."
 msgstr ""
 
-#: admin/functions.php:664
+#: admin/functions.php:706
 msgid "Cache Expiration"
 msgstr ""
 
-#: admin/functions.php:669
+#: admin/functions.php:711
 msgid "1 Hour"
 msgstr ""
 
-#: admin/functions.php:670
+#: admin/functions.php:712
 msgid "3 Hours"
 msgstr ""
 
-#: admin/functions.php:671
+#: admin/functions.php:713
 msgid "6 Hours"
 msgstr ""
 
-#: admin/functions.php:672
+#: admin/functions.php:714
 msgid "12 Hours"
 msgstr ""
 
-#: admin/functions.php:673
+#: admin/functions.php:715
 msgid "24 Hours (1 Day)"
 msgstr ""
 
-#: admin/functions.php:674
+#: admin/functions.php:716
 msgid "Custom"
 msgstr ""
 
-#: admin/functions.php:677
+#: admin/functions.php:719
 msgid "How often the cache should expire and fetch fresh data from the REST API."
 msgstr ""
 
-#: admin/functions.php:683
+#: admin/functions.php:725
 msgid "Custom Hours"
 msgstr ""
 
-#: admin/functions.php:693
+#: admin/functions.php:735
 msgid "hours"
 msgstr ""
 
-#: admin/functions.php:695
+#: admin/functions.php:737
 msgid "Enter a custom number of hours (1-168). Max: 1 week."
 msgstr ""
 
-#: admin/functions.php:708
+#: admin/functions.php:750
 msgid "Save Cache Settings"
 msgstr ""
 
-#: admin/functions.php:821
+#: admin/functions.php:877
 msgid "Error: Please enter a valid URL for the REST API endpoint."
 msgstr ""
 
-#: admin/functions.php:832
+#: admin/functions.php:888
 msgid "Warning: The URL does not appear to be a WordPress REST API endpoint. Make sure it contains \"wp-json\" and returns valid JSON data."
 msgstr ""
 
-#: admin/functions.php:854
+#: admin/functions.php:910
 #, php-format
 msgid "Error: Number of posts must be between %d and %d. Value has been reset to default."
 msgstr ""
 
-#: restpostsembedder.php:96
+#: restpostsembedder.php:91
 msgid "Default Source"
 msgstr ""
 
-#: restpostsembedder.php:108
+#: restpostsembedder.php:91
 msgid "ProWoos Demo Feed"
 msgstr ""
 
-#: restpostsembedder.php:170
+#: restpostsembedder.php:187
 msgid "Settings"
 msgstr ""
 
-#: shortcodes/functions.php:106
+#: shortcodes/functions.php:153
 msgid "Settings → REST Posts Embedder"
 msgstr ""
 
-#: shortcodes/functions.php:110
+#: shortcodes/functions.php:157
 msgid "Demo feed."
 msgstr ""
 
-#: shortcodes/functions.php:111
+#: shortcodes/functions.php:158
 msgid "These sample posts come from ProWoos and are shown for demonstration only."
 msgstr ""
 
 #. translators: %s: link to the plugin settings page.
-#: shortcodes/functions.php:115
+#: shortcodes/functions.php:162
 #, php-format
 msgid "To show your own posts, add a feed source in %s and use the shortcode shown for it."
 msgstr ""
 
-#: shortcodes/functions.php:118
+#: shortcodes/functions.php:165
 msgid "Only administrators see this notice."
 msgstr ""
 
-#: shortcodes/functions.php:151
+#: shortcodes/functions.php:202
 #, php-format
 msgid "The requested feed source \"%s\" is currently disabled."
 msgstr ""
 
-#: shortcodes/functions.php:165
+#: shortcodes/functions.php:218
 #, php-format
 msgid "Feed source \"%s\" not found. Please check your source ID in the plugin settings."
 msgstr ""
 
-#: shortcodes/functions.php:226
+#: shortcodes/functions.php:278
+#: shortcodes/functions.php:308
 msgid "Invalid endpoint URL."
 msgstr ""
 
-#: shortcodes/functions.php:253
+#: shortcodes/functions.php:321
 msgid "No posts found."
 msgstr ""
 
-#: shortcodes/functions.php:328
+#: shortcodes/functions.php:397
 #, php-format
 msgid "Unable to fetch posts. Error: %s. Please check your endpoint URL in the plugin settings."
 msgstr ""
 
-#: shortcodes/functions.php:339
+#: shortcodes/functions.php:413
 #, php-format
 msgid "Unable to fetch posts. Server returned HTTP error %d. Please verify the endpoint URL is correct."
 msgstr ""
 
-#: shortcodes/functions.php:349
+#: shortcodes/functions.php:423
 msgid "Unable to parse response from API. Invalid JSON received."
 msgstr ""
 
-#: shortcodes/functions.php:388
+#: shortcodes/functions.php:667
 msgid "Untitled"
 msgstr ""
 
-#: shortcodes/functions.php:392
+#: shortcodes/functions.php:671
 msgctxt "embedded post date format"
 msgid "jS \\of F Y"
 msgstr ""
 
-#: shortcodes/functions.php:445
+#: shortcodes/functions.php:740
 msgid "Unknown Author"
 msgstr ""
 
-#: shortcodes/functions.php:483
+#. translators: 1: date the post was last modified, 2: author name.
+#: shortcodes/functions.php:781
 #, php-format
 msgid "%1$s, by %2$s"
 msgstr ""
 
-#: shortcodes/functions.php:491
+#. translators: %s: author name.
+#: shortcodes/functions.php:784
+#, php-format
+msgid "by %s"
+msgstr ""
+
+#: shortcodes/functions.php:797
 msgid "Read more..."
 msgstr ""
 
-#: shortcodes/functions.php:540
+#: shortcodes/functions.php:855
 msgid "Load More"
 msgstr ""
 
-#: shortcodes/functions.php:571
+#: shortcodes/functions.php:930
 msgid "Invalid request."
 msgstr ""
 
-#: shortcodes/functions.php:587
+#: shortcodes/functions.php:953
 msgid "This feed has expired. Please refresh the page."
 msgstr ""
 
-#: shortcodes/functions.php:641
-msgid "Loading…"
+#: shortcodes/functions.php:974
+#: shortcodes/functions.php:1089
+msgid "Could not load more posts. Please try again."
 msgstr ""
 
-#: shortcodes/functions.php:642
-msgid "Could not load more posts. Please try again."
+#: shortcodes/functions.php:1088
+msgid "Loading…"
 msgstr ""

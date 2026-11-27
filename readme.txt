@@ -4,7 +4,7 @@ Donate link: https://prowoos.com/
 Tags: rest api, embed posts, posts grid, shortcode, load more
 Requires at least: 5.3
 Tested up to: 7.1
-Stable tag: 3.8.0
+Stable tag: 3.9.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,20 @@ Set "Number of Posts" on the feed source. Each "Load More" click loads another b
 Feeds are cached for one hour by default. Change the duration, or clear the cache, under Settings → REST Posts Embedder → Cache Management.
 
 == Changelog ==
+
+= 3.9.0 =
+* Security: Load More buttons stop working once their feed source is disabled, deleted or pointed elsewhere, and requests past the end of a feed no longer reach the remote site.
+* Security: visitors can no longer clear the site's plugin update list.
+* Security: failed feed requests no longer write the endpoint's query string (API keys, signed URLs) to the error log.
+* Deleting the plugin now removes all its data, including feed sources and settings, on every site of a network.
+* Fixed cached posts appearing in another visitor's language on multilingual sites.
+* Fixed the byline showing the wrong day; it now uses the post's GMT date in this site's timezone.
+* Fixed "hide images on desktop" also hiding them on mobile.
+* Fixed a cached feed being replaced by "Invalid endpoint URL" during a DNS failure.
+* Fixed a blank custom cache duration making cached feeds permanent.
+* Fixed feeds with unexpected field types stopping the page, and a fatal error on hosts without mbstring.
+* Fixed sources with non-Latin names (for example Japanese or Arabic) not being found.
+* Fixed network sites without a default feed, and self-hosted updates being missed by WP-Cron.
 
 = 3.8.0 =
 * Security: feeds are fetched with wp_safe_remote_get(), so redirects to internal addresses are blocked.
