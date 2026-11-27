@@ -31,7 +31,8 @@ function sanitize_excerpt_length($value) {
  *
  * Strips tags, collapses whitespace, then cuts at the last word boundary that
  * fits within the limit and appends an ellipsis. Returns plain text (the
- * caller is responsible for escaping). Multibyte-safe when mbstring is loaded.
+ * caller is responsible for escaping). Multibyte-safe with or without the
+ * mbstring extension.
  *
  * @since 3.7.0
  * @param string $html   The remote excerpt HTML.
@@ -46,18 +47,21 @@ function truncate_excerpt($html, $length) {
         return '';
     }
 
-    $mb = function_exists('mb_strlen');
-
-    if (($mb ? mb_strlen($plain) : strlen($plain)) <= $length) {
+    // WordPress provides mb_strlen() and mb_substr() on hosts without the
+    // mbstring extension, so both are always safe to call. It provides no
+    // mb_strrpos(), so nothing below may depend on it.
+    if (mb_strlen($plain, 'UTF-8') <= $length) {
         return $plain;
     }
 
-    $cut = $mb ? mb_substr($plain, 0, $length) : substr($plain, 0, $length);
+    $cut = mb_substr($plain, 0, $length, 'UTF-8');
 
-    // Back off to the last whole word, unless that would leave nothing.
-    $last_space = $mb ? mb_strrpos($cut, ' ') : strrpos($cut, ' ');
+    // Back off to the last whole word, unless that would leave nothing. A
+    // space is a single byte that never occurs inside a multibyte UTF-8
+    // character, so a byte offset paired with substr() cuts cleanly.
+    $last_space = strrpos($cut, ' ');
     if (false !== $last_space && $last_space > 0) {
-        $cut = $mb ? mb_substr($cut, 0, $last_space) : substr($cut, 0, $last_space);
+        $cut = substr($cut, 0, $last_space);
     }
 
     return rtrim($cut) . '…';
