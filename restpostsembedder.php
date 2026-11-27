@@ -8,6 +8,7 @@
  * Version:     3.8.0
  * Requires at least: 5.3
  * Requires PHP: 7.4
+ * Update URI:  https://prowoos.com/wp-content/uploads/rpe-updates/restpostsembedder.json
  * Text Domain: restpostsembedder
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
@@ -189,9 +190,12 @@ add_action( 'wp_ajax_rest_posts_embedder_load_more', 'RestPostsEmbedder\\Shortco
 add_action( 'wp_ajax_nopriv_rest_posts_embedder_load_more', 'RestPostsEmbedder\\Shortcodes\\rest_posts_embedder_load_more' );
 
 // Self-hosted update checker. Polls a prowoos.com JSON manifest so new releases
-// show up in wp-admin like any other plugin update. Also load it under WP-CLI so
-// `wp plugin update` (and cron-based fleet updaters) pick the release up too.
-if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
-    require plugin_dir_path( __FILE__ ) . 'includes/class-update-checker.php';
-    new \REST_Posts_Embedder_Update_Checker( plugin_basename( __FILE__ ) );
-}
+// show up in wp-admin like any other plugin update. Loaded on every request:
+// WordPress also rebuilds its plugin update list from WP-Cron (including cron
+// run inside a front-end request with ALTERNATE_WP_CRON), WP-CLI and the REST
+// API, and a rebuild without this filter drops the self-hosted release from
+// the list, so the update notice disappears and auto-updates never see it.
+// The checker only registers hooks; the manifest is fetched when WordPress
+// runs an update check.
+require plugin_dir_path( __FILE__ ) . 'includes/class-update-checker.php';
+new \REST_Posts_Embedder_Update_Checker( plugin_basename( __FILE__ ) );

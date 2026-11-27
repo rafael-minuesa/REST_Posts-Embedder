@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `Update URI` plugin header pointing at the prowoos.com manifest, so WordPress 5.8 and later treat the plugin as self-hosted and never match it against a wordpress.org plugin.
+
+### Security
+- **A visitor could clear the site's plugin update list.** Any request with `?force-check` cleared the cached manifest and WordPress's shared `update_plugins` transient whenever `is_admin()` was true, which includes anonymous calls to `admin-ajax.php`. The refresh now runs only on Dashboard > Updates ("Check again") for a user who can update plugins. `?force-check` on other admin screens no longer does anything.
+
 ### Fixed
+- **WP-Cron dropped the self-hosted update.** The update checker loaded only in wp-admin and WP-CLI, so the plugin check WordPress runs from cron rebuilt the update list without the available release. The notice disappeared until the next check from wp-admin, and automatic updates never saw it. The checker now loads on every request.
 - **Truncating an excerpt stopped the page on hosts without mbstring.** The code called `mb_strrpos()`, which WordPress does not provide a fallback for, so any excerpt longer than the limit raised a fatal error in the shortcode and in Load More. Truncation now uses only `mb_strlen()` and `mb_substr()`, which WordPress always provides, and counts characters on every host.
 
 ## [3.8.0] - 2026-09-15
