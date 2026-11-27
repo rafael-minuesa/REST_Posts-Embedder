@@ -28,6 +28,6 @@ if (!defined('ABSPATH')) {
 <?php if ('' !== $card['excerpt']) : ?>
         <div class="embed-posts-card-excerpt"><?php echo $card['excerpt']; ?></div>
 <?php endif; ?>
-        <a href="<?php echo $card['link']; ?>"<?php echo $card['link_target']; ?> class="embed-posts-card-readmore"><?php esc_html_e('Read more', 'restpostsembedder'); ?> <span aria-hidden="true">&rarr;</span></a>
+        <a href="<?php echo $card['link']; ?>"<?php echo $card['link_target']; ?> class="embed-posts-card-readmore"><?php esc_html_e('Read More', 'restpostsembedder'); ?> <span aria-hidden="true">&rarr;</span></a>
     </div>
 </article>
