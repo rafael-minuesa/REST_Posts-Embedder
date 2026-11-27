@@ -11,6 +11,11 @@
 #       alias /srv/plugin-updates/rpe-updates/;
 #   }
 #
+# That block lives in /etc/nginx/sites-enabled/webdock, which the Webdock panel
+# rewrites when a web server action is run there (certificates, web root). If
+# the block is lost, this script stops at its checksum test; put the block back
+# and reload nginx.
+#
 # The web process (www-data) must never be able to write a release, its
 # directory or any parent directory: installed plugins take the package URL
 # from the manifest, so whoever can replace these files can ship code to every
@@ -81,6 +86,7 @@ publish_file() {
     served=$(curl --fail --silent --show-error --location --max-time 60 "${PUBLIC_BASE}/${name}?verify=${expected}" | sha256sum | cut -d' ' -f1)
     if [[ "$served" != "$expected" ]]; then
         echo "Error: ${PUBLIC_BASE}/${name} does not serve the file just published." >&2
+        echo "  Check that the nginx alias to ${REMOTE_DIR} still exists (see the top of this script)." >&2
         echo "  expected sha256 $expected" >&2
         echo "  served   sha256 $served" >&2
         exit 1
