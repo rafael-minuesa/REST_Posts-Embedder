@@ -284,9 +284,10 @@ function prepare_local_card($local_post, $excerpt_length, $excerpt_words = 0) {
  * @param string $columns_style  Inline column style ('' for none).
  * @param array  $atts           Shortcode attributes, for the output filter.
  * @param int    $excerpt_words  Excerpt length in words (0 = not used).
+ * @param bool   $load_more      Whether to show the Load More button.
  * @return string
  */
-function render_local_feed($query, $count, $excerpt_length, $layout, $columns_style, $atts, $excerpt_words = 0) {
+function render_local_feed($query, $count, $excerpt_length, $layout, $columns_style, $atts, $excerpt_words = 0, $load_more = true) {
     $fetch = fetch_local_posts($query, $count, 1);
     if (empty($fetch['posts'])) {
         return '<p>' . esc_html__('No posts found.', 'restpostsembedder') . '</p>';
@@ -296,7 +297,7 @@ function render_local_feed($query, $count, $excerpt_length, $layout, $columns_st
     $html .= '<div class="embed-posts-wrapper"' . ('' !== $columns_style ? ' style="' . esc_attr($columns_style) . '"' : '') . '>';
     $html .= render_local_articles($fetch['posts'], $excerpt_length, $layout, $excerpt_words);
     $html .= '</div>';
-    if ($fetch['total_pages'] > 1) {
+    if ($load_more && $fetch['total_pages'] > 1) {
         $html .= render_local_load_more_button($query, $count, $excerpt_length, $fetch['total_pages'], determine_locale(), $layout, $fetch['carried'], $excerpt_words);
     }
     $html .= '</div>';

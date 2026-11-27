@@ -20,6 +20,7 @@
     var PanelBody = components.PanelBody;
     var SelectControl = components.SelectControl;
     var RangeControl = components.RangeControl;
+    var ToggleControl = components.ToggleControl;
     var ExternalLink = components.ExternalLink;
     var ServerSideRender = wp.serverSideRender;
     var useSelect = wp.data && wp.data.useSelect;
@@ -171,6 +172,11 @@
                 max: attributes.excerptUnit === 'characters' ? 2000 : 200,
                 allowReset: true,
                 onChange: function (value) { setAttributes({ excerptLength: value }); }
+            }),
+            el(ToggleControl, {
+                label: __('Show "Load More" button', TEXT_DOMAIN),
+                checked: attributes.loadMore !== false,
+                onChange: function (value) { setAttributes({ loadMore: value }); }
             })
         );
 

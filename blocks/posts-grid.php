@@ -41,6 +41,7 @@ function block_attributes() {
         'orderby'       => array('type' => 'string', 'default' => 'date'),
         'order'         => array('type' => 'string', 'default' => 'DESC'),
         'offset'        => array('type' => 'number', 'default' => 0),
+        'loadMore'      => array('type' => 'boolean', 'default' => true),
         'align'         => array('type' => 'string'),
         'className'     => array('type' => 'string'),
     );
@@ -93,6 +94,9 @@ function shortcode_atts_for_block($attributes) {
         'order'          => (string) $get('order'),
         'offset'         => $number('offset'),
     );
+    if (isset($attributes['loadMore']) && false === $attributes['loadMore']) {
+        $atts['load_more'] = 'no';
+    }
     $length = $number('excerptLength');
     if ('' !== $length) {
         $atts['words' === $get('excerptUnit', 'words') ? 'excerpt_words' : 'excerpt_length'] = $length;

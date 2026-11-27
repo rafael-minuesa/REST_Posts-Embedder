@@ -39,7 +39,7 @@ To show a single category or tag, add it to the endpoint, for example `?categori
 | `layout`         | Card layout: `classic` or `grid`. Default: the source's layout, then the site's. |
 | `columns`        | Columns on desktop (1 to 5). Default: the Styling setting.                  |
 | `columns_tablet` | Columns on tablets (1 to 5), for layouts with a tablet step such as Grid. Default: the smaller of `columns` and 2. |
-
+| `load_more`      | `no` hides the Load More button. Default: shown.                            |
 | `category`, `tag` | `source="this-site"` only: category or tag slugs, comma-separated (any of them). |
 | `orderby`, `order` | `source="this-site"` only: `date` (default), `modified`, `title` or `comment_count`, and `DESC` (default) or `ASC`. |
 | `offset`         | `source="this-site"` only: posts to skip at the start (0 to 100).           |
@@ -48,7 +48,7 @@ When `source` is set, the source's endpoint and post count are used and the `end
 
 ### Block editor
 
-The **Posts Grid** block (Widgets category) does the same as the shortcode, with settings in the sidebar: source (this site or a feed source), number of posts, category and order for this site's posts, layout, columns, and excerpt length in words or characters. It is rendered by the server like the shortcode, and the editor shows a live preview. It needs no build step and works with WordPress 5.3 and later.
+The **Posts Grid** block (Widgets category) does the same as the shortcode, with settings in the sidebar: source (this site or a feed source), number of posts, category and order for this site's posts, layout, columns, excerpt length in words or characters, and whether to show the Load More button. It is rendered by the server like the shortcode, and the editor shows a live preview. It needs no build step and works with WordPress 5.3 and later.
 
 ### Posts from this site
 
@@ -56,7 +56,7 @@ The **Posts Grid** block (Widgets category) does the same as the shortcode, with
 
 ### ProWoos Posts Grid shortcode
 
-The ProWoos Posts Grid plugin is merged into this one. `[prowoos_posts_grid]` keeps working: it shows a `source="this-site"` feed in the Grid layout, with `posts`, `columns`, `columns_tablet`, `category`, `excerpt_length` (in words), `orderby`, `order` and `offset` as before. `show_date`, `show_excerpt`, `show_readmore` and `readmore_text` are not supported. While ProWoos Posts Grid is still active, its own shortcode is used; deactivate it afterwards.
+The ProWoos Posts Grid plugin is merged into this one. `[prowoos_posts_grid]` keeps working: it shows a `source="this-site"` feed in the Grid layout, with `posts`, `columns`, `columns_tablet`, `category`, `excerpt_length` (in words), `orderby`, `order` and `offset` as before. Like ProWoos Posts Grid it has no Load More button; `load_more="yes"` adds one. `show_date`, `show_excerpt`, `show_readmore` and `readmore_text` are not supported. While ProWoos Posts Grid is still active, its own shortcode is used; deactivate it afterwards.
 
 ### Layouts
 

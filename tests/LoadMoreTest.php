@@ -140,6 +140,22 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
         }
     }
 
+    /** @dataProvider load_more_off_values */
+    public function test_load_more_attribute_hides_the_button($value) {
+        $with = do_shortcode('[posts_embedder]');
+        $without = do_shortcode('[posts_embedder load_more="' . $value . '"]');
+        $this->assertStringContainsString('embed-posts-load-more', $with);
+        $this->assertStringNotContainsString('embed-posts-load-more', $without);
+        $this->assertStringContainsString('<div class="embed-posts-wrapper">', $without);
+        // Cached apart: the next feed with the button still gets it.
+        $this->assertStringContainsString('embed-posts-load-more', do_shortcode('[posts_embedder load_more="yes"]'));
+        $this->assertStringNotContainsString('embed-posts-load-more', do_shortcode('[posts_embedder load_more="' . $value . '"]'));
+    }
+
+    public static function load_more_off_values() {
+        return array('no' => array('no'), 'NO' => array('NO'), 'false' => array('false'), 'off' => array('off'), '0' => array('0'));
+    }
+
     public function test_valid_token_returns_next_page_and_caches_it() {
         $token = $this->rendered_token();
         $response = $this->load_more(array('token' => $token, 'page' => '2'));

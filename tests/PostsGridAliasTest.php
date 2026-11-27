@@ -54,8 +54,15 @@ class PostsGridAliasTest extends WP_UnitTestCase {
         $this->assertStringContainsString('>March 27, 2026</time>', $html);
         // Same-tab links, as in ProWoos Posts Grid.
         $this->assertStringNotContainsString('target=', $html);
+        // No Load More button, as in ProWoos Posts Grid.
+        $this->assertStringNotContainsString('embed-posts-load-more', $html);
+    }
+
+    public function test_load_more_yes_adds_the_button() {
         // 12 posts in batches of 9.
+        $html = do_shortcode('[prowoos_posts_grid posts="9" load_more="yes"]');
         $this->assertStringContainsString('data-total-pages="2"', $html);
+        $this->assertStringNotContainsString('embed-posts-load-more', do_shortcode('[prowoos_posts_grid posts="9" load_more="no"]'));
     }
 
     public function test_defaults_match_prowoos_posts_grid() {
