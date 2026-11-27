@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `Update URI` plugin header pointing at the prowoos.com manifest, so WordPress 5.8 and later treat the plugin as self-hosted and never match it against a wordpress.org plugin.
 
+### Changed
+- `dev-tools/publish-prowoos.sh` publishes releases to a root-owned directory outside the web root (`/srv/plugin-updates/rpe-updates`, mapped to the same public URL by nginx) instead of handing the files to the web user. It refuses to publish if any parent directory is writable by another user, stages uploads outside `/tmp`, and checks that the public URL serves the exact bytes it uploaded.
+
 ### Security
 - **A visitor could clear the site's plugin update list.** Any request with `?force-check` cleared the cached manifest and WordPress's shared `update_plugins` transient whenever `is_admin()` was true, which includes anonymous calls to `admin-ajax.php`. The refresh now runs only on Dashboard > Updates ("Check again") for a user who can update plugins. `?force-check` on other admin screens no longer does anything.
 
