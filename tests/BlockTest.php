@@ -120,4 +120,13 @@ class BlockTest extends WP_UnitTestCase {
     public function test_editor_script_parses() {
         $this->assertFileExists(dirname(__DIR__) . '/assets/js/block-editor.js');
     }
+
+    public function test_editor_strings_use_a_literal_text_domain() {
+        // wp i18n make-pot only extracts calls whose text domain is a literal.
+        $js = file_get_contents(dirname(__DIR__) . '/assets/js/block-editor.js');
+        $calls = preg_match_all('/\b__\(/', $js);
+        $literal = preg_match_all("/\\b__\\(\\s*'(?:[^'\\\\]|\\\\.)*'\\s*,\\s*'restpostsembedder'\\s*\\)/", $js);
+        $this->assertGreaterThan(30, $calls);
+        $this->assertSame($calls, $literal);
+    }
 }
