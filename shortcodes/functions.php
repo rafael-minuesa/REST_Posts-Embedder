@@ -68,6 +68,49 @@ function truncate_excerpt($html, $length) {
 }
 
 /**
+ * Find the stored ID of a feed source from an ID as it was requested.
+ *
+ * Sources are stored under the ID generated when they were created. Up to
+ * 3.8.0 that ID could contain percent-encoded bytes (a source named "東京" got
+ * "%e6%9d%b1%e4%ba%ac_1700000000"), which sanitize_key() strips, so shortcode,
+ * edit and delete never found it. Those IDs stay as they are, because they are
+ * written in shortcodes across the site; this lookup accepts every form they
+ * arrive in: as stored, with the percent signs stripped, or URL-decoded.
+ *
+ * @since 3.9.0
+ * @param mixed $sources   Stored sources, keyed by ID.
+ * @param mixed $requested ID from a shortcode attribute or a request.
+ * @return string The stored ID, or '' when no source matches.
+ */
+function resolve_source_id($sources, $requested) {
+    if (!is_array($sources) || !is_string($requested) || '' === $requested) {
+        return '';
+    }
+    if (isset($sources[$requested])) {
+        return $requested;
+    }
+    // How IDs were looked up until 3.8.0; every ID that worked keeps working.
+    $key = sanitize_key($requested);
+    if ('' !== $key && isset($sources[$key])) {
+        return $key;
+    }
+
+    $canonical = function ($id) {
+        return sanitize_key(sanitize_title((string) $id));
+    };
+    $wanted = $canonical($requested);
+    if ('' === $wanted) {
+        return '';
+    }
+    foreach (array_keys($sources) as $stored) {
+        if ($canonical($stored) === $wanted) {
+            return (string) $stored;
+        }
+    }
+    return '';
+}
+
+/**
  * Whether an endpoint is the bundled ProWoos demo feed.
  *
  * Matches the current demo endpoint and the legacy one (all languages) that
@@ -148,9 +191,9 @@ function rest_posts_embedder($atts = array()) {
     // Multi-source support
     if (!empty($atts['source'])) {
         $sources = get_option('rest_posts_embedder_sources', array());
-        $source_id = sanitize_key($atts['source']);
+        $source_id = resolve_source_id($sources, $atts['source']);
 
-        if (isset($sources[$source_id])) {
+        if ('' !== $source_id) {
             $source = $sources[$source_id];
 
             // Check if source is enabled
@@ -173,7 +216,7 @@ function rest_posts_embedder($atts = array()) {
         } else {
             return '<p>' . sprintf(
                 __('Feed source "%s" not found. Please check your source ID in the plugin settings.', 'restpostsembedder'),
-                esc_html($source_id)
+                esc_html(sanitize_key($atts['source']))
             ) . '</p>';
         }
     }
