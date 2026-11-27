@@ -686,7 +686,7 @@ function render_cache_management() {
                         <input type="number"
                                id="embed_posts_cache_custom_hours"
                                name="embed_posts_cache_custom_hours"
-                               value="<?php echo esc_attr(get_option('embed_posts_cache_custom_hours', 1)); ?>"
+                               value="<?php echo esc_attr(sanitize_cache_custom_hours(get_option('embed_posts_cache_custom_hours', 1))); ?>"
                                min="1"
                                max="168"
                                class="small-text"
@@ -798,11 +798,25 @@ function embed_posts_cache_init() {
 
     register_setting('embed_posts_cache', 'embed_posts_cache_custom_hours', array(
         'type' => 'number',
-        'sanitize_callback' => 'absint',
+        'sanitize_callback' => 'RestPostsEmbedder\\Admin\\sanitize_cache_custom_hours',
         'default' => 1
     ));
 }
 add_action('admin_init', 'RestPostsEmbedder\\Admin\\embed_posts_cache_init');
+
+/**
+ * Keep the custom cache duration within the documented 1-168 hours.
+ *
+ * A blank or zero value must never reach set_transient(): WordPress treats an
+ * expiration of 0 as "never expires", so the feed would stop refreshing.
+ *
+ * @since 3.9.0
+ * @param mixed $value Raw hours (form field or stored option).
+ * @return int Hours, between 1 and 168.
+ */
+function sanitize_cache_custom_hours($value) {
+    return max(1, min(168, absint($value)));
+}
 
 /**
  * Sanitize and validate the REST API endpoint URL.
@@ -925,7 +939,8 @@ function get_cache_expiration() {
         case 'day':
             return DAY_IN_SECONDS;
         case 'custom':
-            $custom_hours = absint(get_option('embed_posts_cache_custom_hours', 1));
+            // Clamp on read as well: values saved by earlier versions can be 0.
+            $custom_hours = sanitize_cache_custom_hours(get_option('embed_posts_cache_custom_hours', 1));
             return $custom_hours * HOUR_IN_SECONDS;
         default: // 'hour'
             return HOUR_IN_SECONDS;

@@ -172,13 +172,12 @@ function rest_posts_embedder($atts = array()) {
         }
     }
 
-    // Validate inputs. Restrict to http/https to limit the SSRF surface from a
-    // shortcode-supplied endpoint, and reject URLs WordPress considers unsafe
-    // (blocked hosts / internal addresses, per WP's own HTTP request rules).
+    // Normalize inputs. Restrict to http/https to limit the SSRF surface from a
+    // shortcode-supplied endpoint. Whether WordPress considers the URL safe to
+    // request is checked further down, only when a request is about to be made:
+    // that check resolves the hostname, and a DNS failure must not hide a feed
+    // that is already cached.
     $endpoint = esc_url_raw($atts['endpoint'], array('http', 'https'));
-    if (!empty($endpoint) && !wp_http_validate_url($endpoint)) {
-        $endpoint = '';
-    }
     // Feeds still stored with the legacy demo endpoint (all languages) get the
     // current demo endpoint (English only).
     if (is_demo_endpoint($endpoint)) {
@@ -197,10 +196,10 @@ function rest_posts_embedder($atts = array()) {
     }
 
     /**
-     * Filter the validated endpoint URL before making the API request.
+     * Filter the sanitized endpoint URL before making the API request.
      *
      * @since 2.9.0
-     * @param string $endpoint The validated endpoint URL.
+     * @param string $endpoint The sanitized endpoint URL (http or https).
      * @param array  $atts     The shortcode attributes.
      */
     $endpoint = apply_filters('rest_posts_embedder_endpoint', $endpoint, $atts);
@@ -237,13 +236,24 @@ function rest_posts_embedder($atts = array()) {
     // Create a unique cache key. Includes excerpt length so changing it busts
     // the cache, a schema version so older cached HTML (without the Load More
     // button) is not served, and the cache generation so "Clear All Cache Now"
-    // invalidates it on any cache backend.
-    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length);
+    // invalidates it on any cache backend. The cached HTML holds translated
+    // text ("Read more...", the date), so the display locale is part of the key
+    // too: one visitor's language must not be served to the next.
+    $locale    = determine_locale();
+    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length . '_' . $locale);
 
     // Try to get cached posts
     $cached_posts = get_transient($cache_key);
     if (false !== $cached_posts) {
         return $demo_notice . $cached_posts;
+    }
+
+    // Nothing cached, so a request is needed. Reject URLs WordPress considers
+    // unsafe (blocked hosts, internal addresses, hostnames that do not resolve).
+    // wp_safe_remote_get() applies the same check to the request and to every
+    // redirect; doing it here as well gives the visitor a clear message.
+    if (!wp_http_validate_url($endpoint)) {
+        return $demo_notice . '<p>' . __('Invalid endpoint URL.', 'restpostsembedder') . '</p>';
     }
 
     // Fetch the first page.
@@ -267,7 +277,7 @@ function rest_posts_embedder($atts = array()) {
     // token maps back to the endpoint/count/excerpt so the AJAX handler never
     // receives a client-supplied URL.
     if ($fetch['total_pages'] > 1) {
-        $allposts .= render_load_more_button($endpoint, $count, $excerpt_length, $fetch['total_pages']);
+        $allposts .= render_load_more_button($endpoint, $count, $excerpt_length, $fetch['total_pages'], $locale);
     }
 
     $allposts .= '</div>'; // Close embed-posts-container
@@ -521,9 +531,11 @@ function render_single_post($remote_post, $excerpt_length) {
  * @param int    $count          Posts per page (batch size).
  * @param int    $excerpt_length Excerpt length in characters.
  * @param int    $total_pages    Total pages available.
+ * @param string $locale         Locale the page was rendered in. Sent back by
+ *                               the button so appended posts match the page.
  * @return string Button HTML.
  */
-function render_load_more_button($endpoint, $count, $excerpt_length, $total_pages) {
+function render_load_more_button($endpoint, $count, $excerpt_length, $total_pages, $locale = '') {
     $token = md5('v2_' . $endpoint . '|' . $count . '|' . $excerpt_length);
 
     // Persist the token -> context mapping as a non-autoloaded option rather
@@ -547,10 +559,53 @@ function render_load_more_button($endpoint, $count, $excerpt_length, $total_page
         . '<button type="button" class="embed-posts-load-more"'
         . ' data-token="' . esc_attr($token) . '"'
         . ' data-page="1"'
-        . ' data-total-pages="' . esc_attr($total_pages) . '">'
+        . ' data-total-pages="' . esc_attr($total_pages) . '"'
+        . ('' !== $locale ? ' data-locale="' . esc_attr($locale) . '"' : '')
+        . '>'
         . esc_html($label)
         . '</button>'
         . '</div>';
+}
+
+/**
+ * Resolve the locale a Load More request should be rendered in.
+ *
+ * The button reports the locale of the page it sits on. An AJAX request has
+ * no page URL, so on a multilingual site its own locale can differ from the
+ * page's. The reported value comes from the browser: it is accepted only when
+ * it is a language installed on this site, which also bounds the number of
+ * cache entries a visitor can create.
+ *
+ * @since 3.9.0
+ * @param string $requested Locale reported by the button ('' when absent).
+ * @return string Locale to render in.
+ */
+function resolve_load_more_locale($requested) {
+    $current = determine_locale();
+    if ('' === $requested || $requested === $current) {
+        return $current;
+    }
+    $installed = array_merge(array('en_US'), get_available_languages());
+    return in_array($requested, $installed, true) ? $requested : $current;
+}
+
+/**
+ * Run a callback with WordPress switched to a locale, then switch back.
+ *
+ * @since 3.9.0
+ * @param string   $locale   Locale to render in.
+ * @param callable $callback Callback to run.
+ * @return mixed The callback's return value.
+ */
+function with_locale($locale, $callback) {
+    $switched = ($locale !== determine_locale()) && switch_to_locale($locale);
+    try {
+        return $callback();
+    } finally {
+        if ($switched) {
+            restore_previous_locale();
+        }
+    }
 }
 
 /**
@@ -567,6 +622,7 @@ function rest_posts_embedder_load_more() {
     // phpcs:disable WordPress.Security.NonceVerification.Missing
     $token = isset($_POST['token']) ? sanitize_text_field(wp_unslash($_POST['token'])) : '';
     $page  = isset($_POST['page']) ? absint(wp_unslash($_POST['page'])) : 0;
+    $locale = resolve_load_more_locale(isset($_POST['locale']) ? sanitize_text_field(wp_unslash($_POST['locale'])) : '');
     // phpcs:enable WordPress.Security.NonceVerification.Missing
 
     // Token is always a 32-char md5 hex string; reject anything else.
@@ -598,30 +654,42 @@ function rest_posts_embedder_load_more() {
     $count          = ($count > 0 && $count <= REST_POSTS_EMBEDDER_MAX_COUNT) ? $count : REST_POSTS_EMBEDDER_DEFAULT_COUNT;
     $excerpt_length = isset($context['excerpt_length']) ? sanitize_excerpt_length($context['excerpt_length']) : 0;
 
-    // Cache each rendered page so repeated clicks don't re-hit the remote.
-    $page_cache_key = 'rest_posts_embedder_p_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '|' . $endpoint . '|' . $count . '|' . $excerpt_length . '|' . $page);
+    // Cache each rendered page so repeated clicks don't re-hit the remote. The
+    // HTML holds translated text, so the locale is part of the key.
+    $page_cache_key = 'rest_posts_embedder_p_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '|' . $endpoint . '|' . $count . '|' . $excerpt_length . '|' . $page . '|' . $locale);
     $cached = get_transient($page_cache_key);
     if (false !== $cached) {
         wp_send_json_success($cached);
     }
 
-    $fetch = fetch_posts_page($endpoint, $count, $page);
-    if (!empty($fetch['error'])) {
-        wp_send_json_error(array('message' => $fetch['error']));
+    // Fetch and render in the page's locale, so error messages, dates and
+    // "Read more..." match the posts already on the page.
+    $result = with_locale($locale, function () use ($endpoint, $count, $page, $excerpt_length) {
+        $fetch = fetch_posts_page($endpoint, $count, $page);
+        if (!empty($fetch['error'])) {
+            return array('error' => $fetch['error']);
+        }
+        if (empty($fetch['posts'])) {
+            return array('payload' => array('html' => '', 'has_more' => false), 'cache' => false);
+        }
+        return array(
+            'payload' => array(
+                'html'     => render_articles($fetch['posts'], $excerpt_length),
+                'has_more' => ($fetch['total_pages'] > 0 && $page < $fetch['total_pages']),
+            ),
+            'cache'   => true,
+        );
+    });
+
+    if (isset($result['error'])) {
+        wp_send_json_error(array('message' => $result['error']));
     }
 
-    if (empty($fetch['posts'])) {
-        wp_send_json_success(array('html' => '', 'has_more' => false));
+    if ($result['cache']) {
+        set_transient($page_cache_key, $result['payload'], \RestPostsEmbedder\Admin\get_cache_expiration());
     }
 
-    $payload = array(
-        'html'     => render_articles($fetch['posts'], $excerpt_length),
-        'has_more' => ($fetch['total_pages'] > 0 && $page < $fetch['total_pages']),
-    );
-
-    set_transient($page_cache_key, $payload, \RestPostsEmbedder\Admin\get_cache_expiration());
-
-    wp_send_json_success($payload);
+    wp_send_json_success($result['payload']);
 }
 
 /**

@@ -43,6 +43,12 @@
 		body.append( 'token', token );
 		body.append( 'page', String( nextPage ) );
 
+		// The language the page was rendered in, so appended posts match it.
+		var locale = button.getAttribute( 'data-locale' );
+		if ( locale ) {
+			body.append( 'locale', locale );
+		}
+
 		var done = function () {
 			button.disabled = false;
 			button.classList.remove( 'is-loading' );
