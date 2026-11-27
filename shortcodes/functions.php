@@ -182,7 +182,12 @@ function rest_posts_embedder($atts = array()) {
         // Per-feed excerpt length in characters. Empty string means "fall back
         // to the source value, then the global default".
         'excerpt_length' => '',
+        // Card layout ID. Empty means the source's layout, then the site's.
+        'layout' => '',
     ), $atts, 'posts_embedder');
+
+    // Layout requested by the source, when the feed comes from one.
+    $source_layout = '';
 
     // Source this feed is bound to, for its Load More button ('' = none).
     $bound_source   = '';
@@ -213,6 +218,7 @@ function rest_posts_embedder($atts = array()) {
             if ('' === $atts['excerpt_length'] && isset($source['excerpt_length'])) {
                 $atts['excerpt_length'] = $source['excerpt_length'];
             }
+            $source_layout = isset($source['layout']) ? $source['layout'] : '';
         } else {
             return '<p>' . sprintf(
                 __('Feed source "%s" not found. Please check your source ID in the plugin settings.', 'restpostsembedder'),
@@ -243,6 +249,8 @@ function rest_posts_embedder($atts = array()) {
     } else {
         $excerpt_length = sanitize_excerpt_length($atts['excerpt_length']);
     }
+
+    $layout = resolve_layout($atts['layout'], $source_layout);
 
     /**
      * Filter the sanitized endpoint URL before making the API request.
@@ -290,9 +298,10 @@ function rest_posts_embedder($atts = array()) {
     // too: one visitor's language must not be served to the next.
     // The HTML also holds the Load More button, whose token is tied to the
     // source the feed came from, so that is part of the key as well: a named
-    // source and a plain endpoint must not share each other's button.
+    // source and a plain endpoint must not share each other's button. So is
+    // the layout, which decides all of the markup.
     $locale    = determine_locale();
-    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length . '_' . $locale . '_' . $bound_source . '_' . $bound_revision);
+    $cache_key = 'rest_posts_embedder_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '_' . $endpoint . '_' . $count . '_' . $excerpt_length . '_' . $locale . '_' . $bound_source . '_' . $bound_revision . '_' . $layout);
 
     // Try to get cached posts
     $cached_posts = get_transient($cache_key);
@@ -322,16 +331,16 @@ function rest_posts_embedder($atts = array()) {
     }
 
     // Render the grid.
-    $allposts  = '<div class="embed-posts-container">';
+    $allposts  = '<div class="embed-posts-container embed-posts-layout-' . esc_attr($layout) . '">';
     $allposts .= '<div class="embed-posts-wrapper">';
-    $allposts .= render_articles($remote_posts, $excerpt_length);
+    $allposts .= render_articles($remote_posts, $excerpt_length, $layout);
     $allposts .= '</div>'; // Close embed-posts-wrapper
 
     // Append the Load More button when more pages are available. A server-side
     // token maps back to the endpoint/count/excerpt so the AJAX handler never
     // receives a client-supplied URL.
     if ($fetch['total_pages'] > 1) {
-        $allposts .= render_load_more_button($endpoint, $count, $excerpt_length, $fetch['total_pages'], $locale, $bound_source, $bound_revision);
+        $allposts .= render_load_more_button($endpoint, $count, $excerpt_length, $fetch['total_pages'], $locale, $bound_source, $bound_revision, $layout);
     }
 
     $allposts .= '</div>'; // Close embed-posts-container
@@ -594,11 +603,12 @@ function is_load_more_context_current($context) {
  * identical between the initial render and appended pages.
  *
  * @since 3.7.0
- * @param array $remote_posts   Decoded remote post objects.
- * @param int   $excerpt_length Excerpt length in characters (0 = unlimited).
+ * @param array  $remote_posts   Decoded remote post objects.
+ * @param int    $excerpt_length Excerpt length in characters (0 = unlimited).
+ * @param string $layout         Layout ID (since 3.10.0).
  * @return string Concatenated <article> HTML.
  */
-function render_articles($remote_posts, $excerpt_length) {
+function render_articles($remote_posts, $excerpt_length, $layout = DEFAULT_LAYOUT) {
     $html = '';
     foreach ($remote_posts as $remote_post) {
         // A feed item that is not a post object cannot be rendered; skip it
@@ -606,7 +616,7 @@ function render_articles($remote_posts, $excerpt_length) {
         if (!is_object($remote_post)) {
             continue;
         }
-        $html .= render_single_post($remote_post, $excerpt_length);
+        $html .= render_single_post($remote_post, $excerpt_length, $layout);
     }
     return $html;
 }
@@ -654,14 +664,58 @@ function feed_gmt_timestamp($gmt_date) {
 }
 
 /**
- * Render a single embedded post as an <article> element.
+ * Render a single embedded post with a layout.
  *
  * @since 3.7.0
  * @param object $remote_post    Decoded remote post object.
  * @param int    $excerpt_length Excerpt length in characters (0 = unlimited).
+ * @param string $layout         Layout ID (since 3.10.0).
  * @return string The post HTML.
  */
-function render_single_post($remote_post, $excerpt_length) {
+function render_single_post($remote_post, $excerpt_length, $layout = DEFAULT_LAYOUT) {
+    $post_html = render_card(prepare_card($remote_post, $excerpt_length), $layout);
+
+    /**
+     * Filter the HTML for individual post.
+     *
+     * @since 2.9.0
+     * @since 3.10.0 The $layout parameter.
+     * @param string $post_html   The post HTML.
+     * @param object $remote_post The remote post object.
+     * @param string $layout      Layout ID the card was rendered with.
+     */
+    return apply_filters('rest_posts_embedder_post_html', $post_html, $remote_post, $layout);
+}
+
+/**
+ * Card data of one remote post, ready for a layout template.
+ *
+ * Every string is already escaped for the context its key names, so a
+ * template prints them as they are:
+ *
+ * - title        Post title, escaped HTML ("Untitled" when empty).
+ * - link         Post URL, escaped for an attribute.
+ * - date         Date the post was last modified, formatted for display and
+ *                escaped, or '' when the feed gives no valid date.
+ * - timestamp    That date as a Unix timestamp, or false.
+ * - author       Author name, escaped HTML.
+ * - author_url   Author archive URL, escaped, or ''.
+ * - author_html  Author name, linked when author_url is set.
+ * - byline       "date, by author", or "by author" without a date.
+ * - image_src    Featured image URL, escaped, or '' when there is none.
+ * - image_srcset srcset attribute value, escaped, or ''.
+ * - image_sizes  sizes attribute value, escaped.
+ * - image_alt    Image alt text, escaped for an attribute.
+ * - excerpt      Excerpt HTML, or ''.
+ * - read_more    "Read more..." label, escaped.
+ * - post         The remote post object as decoded, NOT escaped.
+ *
+ * @since 3.10.0
+ * @param object $remote_post    Decoded remote post object.
+ * @param int    $excerpt_length Excerpt length in characters (0 = unlimited).
+ * @return array
+ */
+function prepare_card($remote_post, $excerpt_length) {
     // Safely extract post data
     $title = feed_string(isset($remote_post->title->rendered) ? $remote_post->title->rendered : '');
     $title = '' !== $title ? esc_html($title) : __('Untitled', 'restpostsembedder');
@@ -737,7 +791,7 @@ function render_single_post($remote_post, $excerpt_length) {
     $thumb_sizes = '(max-width: 768px) 100vw, ' . round(100 / $columns_desktop) . 'vw';
 
     // Author information
-    $author_name = __('Unknown Author', 'restpostsembedder');
+    $author_name = esc_html__('Unknown Author', 'restpostsembedder');
     $author_name_url = '';
     if (
         !empty($remote_post->author)
@@ -784,31 +838,23 @@ function render_single_post($remote_post, $excerpt_length) {
         $byline = sprintf(__('by %s', 'restpostsembedder'), $author_html);
     }
 
-    // Build individual post HTML (article only, no wrappers)
-    $post_html = '<article class="embed-posts">
-                    <a href="' . $link . '" target="_blank" rel="noopener noreferrer">
-                        <h3>' . $title . '</h3>
-                    </a>
-                    <small>' . $byline . '</small>
-                    <div class="embed-post-content">
-                        ' . ($thumb_url ? '<a href="' . $link . '" target="_blank" rel="noopener noreferrer"><img src="' . $thumb_url . '"' . ($thumb_srcset ? ' srcset="' . $thumb_srcset . '" sizes="' . esc_attr($thumb_sizes) . '"' : '') . ' alt="' . esc_attr($title) . '" loading="lazy" /></a>' : '') . '
-                        ' . $excerpt . '
-                        <a href="' . $link . '" target="_blank" rel="noopener noreferrer" class="read-more">
-                            <b>' . __('Read more...', 'restpostsembedder') . '</b>
-                        </a>
-                    </div>
-                </article>';
-
-    /**
-     * Filter the HTML for individual post.
-     *
-     * @since 2.9.0
-     * @param string $post_html   The post HTML.
-     * @param object $remote_post The remote post object.
-     */
-    $post_html = apply_filters('rest_posts_embedder_post_html', $post_html, $remote_post);
-
-    return $post_html;
+    return array(
+        'title'        => $title,
+        'link'         => $link,
+        'date'         => esc_html($fordate),
+        'timestamp'    => $timestamp,
+        'author'       => $author_name,
+        'author_url'   => $author_name_url,
+        'author_html'  => $author_html,
+        'byline'       => $byline,
+        'image_src'    => (string) $thumb_url,
+        'image_srcset' => (string) $thumb_srcset,
+        'image_sizes'  => esc_attr($thumb_sizes),
+        'image_alt'    => esc_attr($title),
+        'excerpt'      => $excerpt,
+        'read_more'    => esc_html__('Read more...', 'restpostsembedder'),
+        'post'         => $remote_post,
+    );
 }
 
 /**
@@ -828,10 +874,14 @@ function render_single_post($remote_post, $excerpt_length) {
  * @param string $source         ID of the source the feed comes from ('' for
  *                               a feed that is not a named source).
  * @param string $revision       source_revision() of that source.
+ * @param string $layout         Layout ID the feed is rendered with (since 3.10.0).
  * @return string Button HTML.
  */
-function render_load_more_button($endpoint, $count, $excerpt_length, $total_pages, $locale = '', $source = '', $revision = '') {
-    $token = md5('v3_' . $source . '|' . $revision . '|' . $endpoint . '|' . $count . '|' . $excerpt_length);
+function render_load_more_button($endpoint, $count, $excerpt_length, $total_pages, $locale = '', $source = '', $revision = '', $layout = DEFAULT_LAYOUT) {
+    // Classic feeds keep the token and context of 3.9.0, so buttons on pages
+    // cached before the update keep their stored context.
+    $classic = DEFAULT_LAYOUT === $layout;
+    $token   = md5('v3_' . $source . '|' . $revision . '|' . $endpoint . '|' . $count . '|' . $excerpt_length . ($classic ? '' : '|' . $layout));
 
     // Persist the token -> context mapping as a non-autoloaded option rather
     // than a transient. Page caches can serve this button for days or weeks,
@@ -847,6 +897,9 @@ function render_load_more_button($endpoint, $count, $excerpt_length, $total_page
         'source'         => $source,
         'revision'       => $revision,
     );
+    if (!$classic) {
+        $context['layout'] = $layout;
+    }
     $option = 'rest_posts_embedder_lm_' . $token;
     if (get_option($option) !== $context) {
         update_option($option, $context, false);
@@ -959,6 +1012,9 @@ function rest_posts_embedder_load_more() {
     $count          = absint($context['count']);
     $count          = ($count > 0 && $count <= REST_POSTS_EMBEDDER_MAX_COUNT) ? $count : REST_POSTS_EMBEDDER_DEFAULT_COUNT;
     $excerpt_length = isset($context['excerpt_length']) ? sanitize_excerpt_length($context['excerpt_length']) : 0;
+    // Contexts without a layout were rendered as Classic. One whose layout was
+    // unregistered since gets the site's default.
+    $layout         = resolve_layout(isset($context['layout']) ? $context['layout'] : DEFAULT_LAYOUT);
 
     // A page past the known end of the feed needs no request. Without this,
     // anyone could make the site fetch (and log) one failing request per page
@@ -980,7 +1036,7 @@ function rest_posts_embedder_load_more() {
 
     // Cache each rendered page so repeated clicks don't re-hit the remote. The
     // HTML holds translated text, so the locale is part of the key.
-    $page_cache_key = 'rest_posts_embedder_p_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '|' . $endpoint . '|' . $count . '|' . $excerpt_length . '|' . $page . '|' . $locale);
+    $page_cache_key = 'rest_posts_embedder_p_' . md5('v2_' . \RestPostsEmbedder\Admin\get_cache_generation() . '|' . $endpoint . '|' . $count . '|' . $excerpt_length . '|' . $page . '|' . $locale . '|' . $layout);
     $cached = get_transient($page_cache_key);
     if (false !== $cached) {
         wp_send_json_success($cached);
@@ -988,7 +1044,7 @@ function rest_posts_embedder_load_more() {
 
     // Fetch and render in the page's locale, so error messages, dates and
     // "Read more..." match the posts already on the page.
-    $result = with_locale($locale, function () use ($endpoint, $count, $page, $excerpt_length) {
+    $result = with_locale($locale, function () use ($endpoint, $count, $page, $excerpt_length, $layout) {
         $fetch = fetch_posts_page($endpoint, $count, $page);
         // The feed shrank since its page count was stored: the remote answers
         // 400 (rest_post_invalid_page_number) or an empty list. That is the end
@@ -1007,7 +1063,7 @@ function rest_posts_embedder_load_more() {
         remember_page_bound($endpoint, $count, $fetch['total_pages'], \RestPostsEmbedder\Admin\get_cache_expiration());
         return array(
             'payload' => array(
-                'html'     => render_articles($fetch['posts'], $excerpt_length),
+                'html'     => render_articles($fetch['posts'], $excerpt_length, $layout),
                 'has_more' => ($fetch['total_pages'] > 0 && $page < $fetch['total_pages']),
             ),
             'cache'   => \RestPostsEmbedder\Admin\get_cache_expiration(),

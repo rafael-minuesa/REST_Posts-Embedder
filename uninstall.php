@@ -28,6 +28,7 @@ function rest_posts_embedder_uninstall_site() {
         'embed_posts_endpoint',
         'embed_posts_count',
         // Styling settings.
+        'embed_posts_layout',
         'embed_posts_excerpt_length',
         'embed_posts_columns_desktop',
         'embed_posts_columns_mobile',

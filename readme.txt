@@ -44,8 +44,9 @@ To show a single category or tag, add it to the endpoint, for example `https://e
 * `endpoint` is a REST API endpoint URL, for use without a source.
 * `count` is the number of posts per batch (1 to 20). Each "Load More" click loads another batch.
 * `excerpt_length` is the excerpt length in characters. `0` shows the full excerpt. The default is 200.
+* `layout` is the card layout ID, for example `classic`. Without it the source's layout is used, then the one set on the Styling tab.
 
-When `source` is set, the source's endpoint and post count are used and the `endpoint` and `count` attributes are ignored. `excerpt_length` still overrides the source setting.
+When `source` is set, the source's endpoint and post count are used and the `endpoint` and `count` attributes are ignored. `excerpt_length` and `layout` still override the source settings.
 
 == Installation ==
 

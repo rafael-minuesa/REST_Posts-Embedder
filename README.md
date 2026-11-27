@@ -35,8 +35,13 @@ To show a single category or tag, add it to the endpoint, for example `?categori
 | `endpoint`       | REST API endpoint URL, for use without a source.                            |
 | `count`          | Posts per batch (1 to 20). Each "Load More" click loads another batch.      |
 | `excerpt_length` | Excerpt length in characters. `0` shows the full excerpt. Default `200`.    |
+| `layout`         | Card layout ID, for example `classic`. Default: the source's layout, then the site's. |
 
-When `source` is set, the source's endpoint and post count are used and the `endpoint` and `count` attributes are ignored. `excerpt_length` still overrides the source setting.
+When `source` is set, the source's endpoint and post count are used and the `endpoint` and `count` attributes are ignored. `excerpt_length` and `layout` still override the source settings.
+
+### Layouts
+
+The card layout is chosen on the Styling tab for the whole site, per feed source, or per shortcode with `layout`. The plugin ships the Classic layout. A theme or plugin can add one with the `rest_posts_embedder_layouts` filter, giving a label and a template file. The template receives the card data as `$card`, already escaped (see `prepare_card()` in `shortcodes/functions.php`).
 
 ### Features
 
