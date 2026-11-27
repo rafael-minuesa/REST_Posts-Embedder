@@ -216,12 +216,13 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
 
         $response = $this->load_more(array('token' => $token, 'page' => '3'));
         $this->assertSame(array('success' => true, 'data' => array('html' => '', 'has_more' => false)), $response);
-        $this->assertCount(1, $this->requests);
+        // Page 3, then page 1 for the remote's new page count.
+        $this->assertSame(array('3', '1'), array_column($this->requests, 'page'));
 
         // The new end is remembered: retries and later pages cost nothing.
         $this->load_more(array('token' => $token, 'page' => '3'));
         $this->load_more(array('token' => $token, 'page' => '4'));
-        $this->assertCount(1, $this->requests);
+        $this->assertCount(2, $this->requests);
         $this->assertSame('', file_get_contents($log), 'The end of a feed is not an error.');
 
         // Pages that still exist keep working.
@@ -229,17 +230,33 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
         $this->assertStringContainsString('<h3>Remote post page 2</h3>', $second['data']['html']);
     }
 
-    public function test_unknown_page_count_is_learned_from_the_first_request_past_the_end() {
+    public function test_unknown_page_count_is_learned_from_the_remote_not_from_the_request() {
         $token = $this->rendered_token();
-        // As after an object-cache eviction: the number of pages is no longer known.
+        // As after a cache expiry, "Clear All Cache Now" or an eviction.
         delete_transient(\RestPostsEmbedder\Shortcodes\page_bound_key(self::ENDPOINT, 2));
 
         $this->assertFalse($this->load_more(array('token' => $token, 'page' => '50'))['data']['has_more']);
-        $this->assertCount(1, $this->requests);
-        foreach (array('50', '51', '7000') as $page) {
+        $this->assertSame(array('1'), array_column($this->requests, 'page'), 'Only page 1, for the page count.');
+
+        // Walking down from a huge page number must not reach the remote.
+        // Before this fix each step stored "page - 1" as the count and fetched.
+        foreach (array('1000000', '999999', '999998', '51', '50', '4') as $page) {
             $this->assertFalse($this->load_more(array('token' => $token, 'page' => $page))['data']['has_more']);
         }
-        $this->assertCount(1, $this->requests, 'Pages past a known end must not reach the remote feed.');
+        $this->assertCount(1, $this->requests, 'Pages past the remote page count must not reach the remote feed.');
+    }
+
+    public function test_page_count_lookup_failure_is_not_retried_for_a_minute() {
+        $token = $this->rendered_token();
+        delete_transient(\RestPostsEmbedder\Shortcodes\page_bound_key(self::ENDPOINT, 2));
+        $this->failure = new WP_Error('http_request_failed', 'Operation timed out');
+
+        foreach (array('2', '3', '900') as $page) {
+            $response = $this->load_more(array('token' => $token, 'page' => $page));
+            $this->assertFalse($response['success']);
+            $this->assertSame('Could not load more posts. Please try again.', $response['data']['message']);
+        }
+        $this->assertCount(1, $this->requests, 'A remote that is down is asked once a minute at most.');
     }
 
     public function test_empty_page_is_the_end_of_the_list() {
@@ -247,8 +264,10 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
         $this->failure = $this->response(200, '[]');
         $response = $this->load_more(array('token' => $token, 'page' => '2'));
         $this->assertSame(array('success' => true, 'data' => array('html' => '', 'has_more' => false)), $response);
+        $count = count($this->requests);
+        // Even when the remote still claims three pages, repeating the click is free.
         $this->load_more(array('token' => $token, 'page' => '2'));
-        $this->assertCount(1, $this->requests);
+        $this->assertCount($count, $this->requests);
     }
 
     /** Send error_log() to a file for the rest of the test and return its path. */
@@ -282,7 +301,9 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
         $response = $this->load_more(array('token' => $token, 'page' => '2'));
         $this->assert_rejected($response, 'This feed has expired. Please refresh the page.');
         $this->assertTrue($response['data']['expired']);
-        $this->assertFalse(get_option('rest_posts_embedder_lm_' . $token), 'The retired context must be forgotten.');
+        $this->assertCount(0, $this->requests, 'A retired feed must not be fetched.');
+        // Kept, so the button works again if the change is undone.
+        $this->assertIsArray(get_option('rest_posts_embedder_lm_' . $token));
     }
 
     public function test_source_button_records_its_source() {
@@ -305,10 +326,12 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
         }
         $this->assert_expired($token);
 
-        // Undoing the change does not bring the old button back.
+        // Undoing the change brings the same button back: it is still in the
+        // cached HTML, which the shortcode serves without writing the context.
         $this->save_source();
         $response = $this->load_more(array('token' => $token, 'page' => '2'));
-        $this->assert_rejected($response, 'This feed has expired. Please refresh the page.');
+        $this->assertTrue($response['success'], wp_json_encode($response));
+        $this->assertStringContainsString('<h3>Remote post page 2</h3>', $response['data']['html']);
     }
 
     public static function retiring_changes() {

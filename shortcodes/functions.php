@@ -506,6 +506,34 @@ function remember_page_bound($endpoint, $count, $total_pages, $ttl) {
 }
 
 /**
+ * Ask the remote for a feed's number of pages and remember it.
+ *
+ * Fetches the first page, whose X-WP-TotalPages header gives the count. A
+ * failure is remembered for a minute, so requests arriving while the remote
+ * is down do not each wait for it. A remote that sends no count is treated as
+ * a single page, which is also when no Load More button is rendered.
+ *
+ * @since 3.9.0
+ * @param string $endpoint Endpoint URL.
+ * @param int    $count    Posts per page.
+ * @return int|false Number of pages, or false when it could not be fetched.
+ */
+function learn_page_bound($endpoint, $count) {
+    $failed_key = page_bound_key($endpoint, $count) . '_f';
+    if (false !== get_transient($failed_key)) {
+        return false;
+    }
+    $fetch = fetch_posts_page($endpoint, $count, 1);
+    if (!empty($fetch['error'])) {
+        set_transient($failed_key, 1, MINUTE_IN_SECONDS);
+        return false;
+    }
+    $total_pages = max(1, (int) $fetch['total_pages']);
+    remember_page_bound($endpoint, $count, $total_pages, \RestPostsEmbedder\Admin\get_cache_expiration());
+    return $total_pages;
+}
+
+/**
  * Whether a stored Load More context may still be used.
  *
  * A button on a cached page keeps its token for as long as that page is
@@ -915,9 +943,9 @@ function rest_posts_embedder_load_more() {
     }
     $expired = !is_array($context) || empty($context['endpoint']) || !is_string($context['endpoint']);
     if (!$expired && !is_load_more_context_current($context)) {
-        // The feed behind this button was changed or retired. Forget the
-        // context so the old endpoint can never be fetched through it again.
-        delete_option($option);
+        // The feed behind this button was changed or retired. The context is
+        // kept: the check runs on every request, and if the change is undone
+        // the same button, still in cached HTML, must work again.
         $expired = true;
     }
     if ($expired) {
@@ -937,7 +965,16 @@ function rest_posts_embedder_load_more() {
     // number. The button is removed when has_more is false.
     $end_of_feed = array('html' => '', 'has_more' => false);
     $page_bound  = get_transient(page_bound_key($endpoint, $count));
-    if (false !== $page_bound && $page > (int) $page_bound) {
+    if (false === $page_bound) {
+        // Not known (expired with the feed's cache, cleared, or evicted).
+        // Learn it from the remote's own page count before fetching any
+        // page, so a request can never set it.
+        $page_bound = learn_page_bound($endpoint, $count);
+        if (false === $page_bound) {
+            wp_send_json_error(array('message' => __('Could not load more posts. Please try again.', 'restpostsembedder')));
+        }
+    }
+    if ($page > (int) $page_bound) {
         wp_send_json_success($end_of_feed);
     }
 
@@ -953,12 +990,16 @@ function rest_posts_embedder_load_more() {
     // "Read more..." match the posts already on the page.
     $result = with_locale($locale, function () use ($endpoint, $count, $page, $excerpt_length) {
         $fetch = fetch_posts_page($endpoint, $count, $page);
-        // The feed is shorter than the button believed: the remote answers 400
-        // (rest_post_invalid_page_number) or an empty list. That is the end of
-        // the list, not an error. Remember it briefly, as the feed can grow.
+        // The feed shrank since its page count was stored: the remote answers
+        // 400 (rest_post_invalid_page_number) or an empty list. That is the end
+        // of the list, not an error. Store the remote's new count; never derive
+        // it from the requested page number.
         if (400 === $fetch['status'] || (empty($fetch['error']) && empty($fetch['posts']))) {
-            remember_page_bound($endpoint, $count, $page - 1, 5 * MINUTE_IN_SECONDS);
-            return array('payload' => array('html' => '', 'has_more' => false), 'cache' => false);
+            delete_transient(page_bound_key($endpoint, $count));
+            learn_page_bound($endpoint, $count);
+            // Cached briefly: a remote whose count disagrees with its pages
+            // must not cost a request per click on this page.
+            return array('payload' => array('html' => '', 'has_more' => false), 'cache' => 5 * MINUTE_IN_SECONDS);
         }
         if (!empty($fetch['error'])) {
             return array('error' => $fetch['error']);
@@ -969,7 +1010,7 @@ function rest_posts_embedder_load_more() {
                 'html'     => render_articles($fetch['posts'], $excerpt_length),
                 'has_more' => ($fetch['total_pages'] > 0 && $page < $fetch['total_pages']),
             ),
-            'cache'   => true,
+            'cache'   => \RestPostsEmbedder\Admin\get_cache_expiration(),
         );
     });
 
@@ -977,9 +1018,7 @@ function rest_posts_embedder_load_more() {
         wp_send_json_error(array('message' => $result['error']));
     }
 
-    if ($result['cache']) {
-        set_transient($page_cache_key, $result['payload'], \RestPostsEmbedder\Admin\get_cache_expiration());
-    }
+    set_transient($page_cache_key, $result['payload'], $result['cache']);
 
     wp_send_json_success($result['payload']);
 }
