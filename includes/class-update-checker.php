@@ -54,12 +54,26 @@ class REST_Posts_Embedder_Update_Checker {
 		add_filter( 'plugins_api', array( $this, 'plugin_info' ), 10, 3 );
 		add_action( 'upgrader_process_complete', array( $this, 'clear_cache' ), 10, 2 );
 
-		// Force-check: drop our cache and WP's update_plugins transient so a
-		// Plugins-page refresh immediately re-fetches.
-		if ( is_admin() && isset( $_GET['force-check'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			delete_transient( self::CACHE_KEY );
-			delete_site_transient( 'update_plugins' );
+		// Before core's own wp_update_plugins() on the same hook (priority 10).
+		add_action( 'load-update-core.php', array( $this, 'maybe_force_check' ), 9 );
+	}
+
+	/**
+	 * "Check again" on Dashboard > Updates: drop the cached manifest and WP's
+	 * update_plugins transient so the screen re-fetches immediately.
+	 *
+	 * Runs only on the Updates screen, for a user who may update plugins.
+	 * is_admin() is not enough: it is also true for admin-ajax.php, which
+	 * anonymous visitors can call. Core's "Check again" link carries no nonce
+	 * (update-core.php?force-check=1), so none can be verified here; the only
+	 * effect is the same refresh core performs for that link.
+	 */
+	public function maybe_force_check() {
+		if ( empty( $_GET['force-check'] ) || ! current_user_can( 'update_plugins' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
 		}
+		delete_transient( self::CACHE_KEY );
+		delete_site_transient( 'update_plugins' );
 	}
 
 	/**
