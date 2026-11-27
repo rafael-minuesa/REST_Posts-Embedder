@@ -60,7 +60,7 @@ The ProWoos Posts Grid plugin is merged into this one. `[prowoos_posts_grid]` ke
 
 ### Layouts
 
-The card layout is chosen on the Styling tab for the whole site, per feed source, or per shortcode with `layout`. The plugin ships two layouts. Classic shows the title and byline above the image. Grid shows cards with the image on top, then the date, title, excerpt and a "Read more" link, in 1, 2 or 3 columns by screen width (phone, tablet from 544px, desktop from 921px). A theme or plugin can add one with the `rest_posts_embedder_layouts` filter, giving a label and a template file. The template receives the card data as `$card`, already escaped (see `prepare_card()` in `shortcodes/functions.php`).
+The card layout is chosen on the Styling tab for the whole site, per feed source, or per shortcode with `layout`. The plugin ships two layouts. Classic shows the title and byline above the image. Grid shows cards with the image on top, then the date, title, excerpt and a "Read More" link, in 1, 2 or 3 columns by screen width (phone, tablet from 544px, desktop from 921px). A theme or plugin can add one with the `rest_posts_embedder_layouts` filter, giving a label and a template file. The template receives the card data as `$card`, already escaped (see `prepare_card()` in `shortcodes/functions.php`).
 
 ### Features
 
