@@ -61,6 +61,8 @@ jobs:
       - name: Install WordPress test framework
         run: bash dev-tools/install-test-wordpress.sh "${{ matrix.wordpress }}"
       - run: composer test:random
+      - name: Run the suite on a multisite network
+        run: composer test:multisite
       # PHP 7.4 cannot redefine a disabled function, so WordPress's fallbacks
       # cannot load there.
       - name: Run the suite as on a host without mbstring

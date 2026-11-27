@@ -177,7 +177,7 @@ function rest_posts_embedder($atts = array()) {
     // Allow overriding of settings via shortcode attributes
     $atts = shortcode_atts(array(
         'source' => '',  // Source ID for multi-source support
-        'endpoint' => get_option('embed_posts_endpoint'),
+        'endpoint' => \RestPostsEmbedder\get_default_endpoint(),
         'count' => get_option('embed_posts_count', REST_POSTS_EMBEDDER_DEFAULT_COUNT),
         // Per-feed excerpt length in characters. Empty string means "fall back
         // to the source value, then the global default".
@@ -190,7 +190,7 @@ function rest_posts_embedder($atts = array()) {
 
     // Multi-source support
     if (!empty($atts['source'])) {
-        $sources = get_option('rest_posts_embedder_sources', array());
+        $sources = \RestPostsEmbedder\get_sources();
         $source_id = resolve_source_id($sources, $atts['source']);
 
         if ('' !== $source_id) {

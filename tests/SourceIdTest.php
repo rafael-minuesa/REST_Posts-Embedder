@@ -18,7 +18,8 @@ class SourceIdTest extends WP_UnitTestCase {
         require_once ABSPATH . 'wp-admin/includes/template.php';
         $this->requests = 0;
         update_option('rest_posts_embedder_cache_generation', wp_generate_uuid4());
-        delete_option('rest_posts_embedder_sources');
+        // An empty stored list: a site with no stored list at all starts with the demo source.
+        update_option('rest_posts_embedder_sources', array());
         wp_set_current_user(self::factory()->user->create(array('role' => 'administrator')));
         add_filter('pre_http_request', array($this, 'intercept_request'), PHP_INT_MAX, 3);
     }
