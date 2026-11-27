@@ -514,17 +514,17 @@ function remember_page_bound($endpoint, $count, $total_pages, $ttl) {
  * exists, is enabled and still fetches the same endpoint and batch size.
  *
  * Contexts written by 3.8.0 and earlier do not record their source. They are
- * accepted while they match a feed that is configured now. Any other one may
- * belong to a shortcode with an inline endpoint, which cannot be looked up,
- * so it gets a grace period from its first use after the update and then
- * expires.
+ * accepted only while they match a feed that is configured now: an enabled
+ * source with the same endpoint and batch size, or the default endpoint. Any
+ * other one expires at once. That includes buttons of shortcodes with an
+ * inline endpoint on pages cached before the update, which cannot be told
+ * apart from a retired source; they work again once the page is rebuilt.
  *
  * @since 3.9.0
- * @param array  $context Stored context.
- * @param string $option  Name of the option holding it.
+ * @param array $context Stored context.
  * @return bool
  */
-function is_load_more_context_current($context, $option) {
+function is_load_more_context_current($context) {
     $sources = get_option('rest_posts_embedder_sources', array());
     $sources = is_array($sources) ? $sources : array();
 
@@ -555,16 +555,7 @@ function is_load_more_context_current($context, $option) {
             return true;
         }
     }
-    if ($normalize(get_option('embed_posts_endpoint')) === $endpoint) {
-        return true;
-    }
-
-    if (empty($context['legacy_until'])) {
-        $context['legacy_until'] = time() + REST_POSTS_EMBEDDER_LEGACY_CONTEXT_GRACE;
-        update_option($option, $context, false);
-        return true;
-    }
-    return time() < (int) $context['legacy_until'];
+    return $normalize(get_option('embed_posts_endpoint')) === $endpoint;
 }
 
 /**
@@ -922,7 +913,7 @@ function rest_posts_embedder_load_more() {
         }
     }
     $expired = !is_array($context) || empty($context['endpoint']) || !is_string($context['endpoint']);
-    if (!$expired && !is_load_more_context_current($context, $option)) {
+    if (!$expired && !is_load_more_context_current($context)) {
         // The feed behind this button was changed or retired. Forget the
         // context so the old endpoint can never be fetched through it again.
         delete_option($option);

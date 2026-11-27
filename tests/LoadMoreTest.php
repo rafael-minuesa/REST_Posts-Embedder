@@ -342,37 +342,35 @@ class LoadMoreTest extends WP_Ajax_UnitTestCase {
         // Matches the default endpoint option.
         $token = $this->legacy_token(self::ENDPOINT);
         $this->assertTrue($this->load_more(array('token' => $token, 'page' => '2'))['success']);
-        $this->assertArrayNotHasKey('legacy_until', get_option('rest_posts_embedder_lm_' . $token));
 
         // Matches an enabled source.
         $other = 'https://93.184.216.34/other/wp-json/wp/v2/posts';
         $this->save_source(array('endpoint' => $other));
         $token = $this->legacy_token($other);
         $this->assertTrue($this->load_more(array('token' => $token, 'page' => '2'))['success']);
-        $this->assertArrayNotHasKey('legacy_until', get_option('rest_posts_embedder_lm_' . $token));
+        // Nothing is added to a context that stays valid.
+        $this->assertSame(
+            array('endpoint' => $other, 'count' => 2, 'excerpt_length' => 200),
+            get_option('rest_posts_embedder_lm_' . $token)
+        );
     }
 
-    public function test_unmatched_context_from_an_earlier_version_gets_a_grace_period_then_expires() {
+    /** @dataProvider unmatched_sources */
+    public function test_unmatched_context_from_an_earlier_version_expires_at_once($source) {
         $retired = 'https://93.184.216.34/retired/wp-json/wp/v2/posts';
-        $token = $this->legacy_token($retired);
-
-        $this->assertTrue($this->load_more(array('token' => $token, 'page' => '2'))['success']);
-        $until = get_option('rest_posts_embedder_lm_' . $token)['legacy_until'];
-        $this->assertEqualsWithDelta(time() + 30 * DAY_IN_SECONDS, $until, 5);
-
-        // Further use does not extend it.
-        $this->load_more(array('token' => $token, 'page' => '3'));
-        $this->assertSame($until, get_option('rest_posts_embedder_lm_' . $token)['legacy_until']);
-
-        $this->requests = array();
-        $expired = $this->legacy_token($retired, array('legacy_until' => time() - 1));
-        $this->assert_expired($expired);
+        if (null !== $source) {
+            $this->save_source(array_merge(array('endpoint' => $retired), $source));
+        }
+        $this->assert_expired($this->legacy_token($retired));
     }
 
-    public function test_disabled_source_does_not_keep_an_earlier_context_alive() {
-        $retired = 'https://93.184.216.34/retired/wp-json/wp/v2/posts';
-        $this->save_source(array('endpoint' => $retired, 'enabled' => false));
-        $this->assert_expired($this->legacy_token($retired, array('legacy_until' => time() - 1)));
+    public static function unmatched_sources() {
+        return array(
+            'no such feed' => array(null),
+            'source disabled' => array(array('enabled' => false)),
+            'source has another batch size' => array(array('count' => 4)),
+            'source has another endpoint' => array(array('endpoint' => 'https://93.184.216.34/moved/wp-json/wp/v2/posts')),
+        );
     }
 
     /** @dataProvider logged_failures */
